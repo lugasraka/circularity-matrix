@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Circularity Matrix
+
+A decision-support tool that helps identify the right circular economy strategy for a product, based on the HBR Circularity Matrix framework (Atasu, Dumas & Van Wassenhove, 2021).
+
+Users answer 8 questions across three dimensions — access difficulty, process difficulty, and embedded value — and the tool maps their product onto an 8-cell matrix recommending one or more strategies: Retain Product Ownership (RPO), Product Life Extension (PLE), or Design for Recycling (DFR).
+
+## Features
+
+- **Assessment wizard** — 8-question questionnaire that scores and places a product on the matrix
+- **Matrix visualization** — SVG-based 2x2 grid with embedded value sub-cells and numbered product pins
+- **Multi-product portfolio** — Assess multiple products and compare them on a single matrix
+- **What-if analysis** — Toggle embedded value to see how the recommendation shifts
+- **PDF report** — Client-side export of the full portfolio with matrix visualization and per-product details
+- **Matrix explorer** — Browse all 8 cells and their strategies without taking the quiz
+
+## Tech Stack
+
+- Next.js (App Router, TypeScript, static export)
+- Tailwind CSS v4
+- jsPDF (client-side PDF generation, dynamically imported)
+- React Context + localStorage for state persistence
+
+No backend. No database. Deploys as a static site.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build & Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+Produces a static export in `out/`. Deploy to any static host (Vercel, Netlify, GitHub Pages, etc.).
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/          Pages (landing, assess, portfolio, explore)
+├── components/   UI components (matrix, wizard, results, product list)
+└── lib/          Domain logic (types, questions, scoring, strategies, PDF)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
+MIT
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Created by
+[Raka Adrianto, Sustainability Product Manager](https://github.com/lugasraka)
