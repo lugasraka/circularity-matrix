@@ -138,6 +138,28 @@ export default function HomePage() {
           Start Assessment →
         </Link>
       </div>
+
+      {/* Creator credit */}
+      <p className="text-center text-sm text-gray-400 mt-12">
+        Built by{" "}
+        <a
+          href="https://github.com/lugasraka"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-600 underline underline-offset-2 transition-colors"
+        >
+          Raka Adrianto
+        </a>
+        {" · "}
+        <a
+          href="https://github.com/lugasraka"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-600 underline underline-offset-2 transition-colors"
+        >
+          GitHub
+        </a>
+      </p>
     </div>
   );
 }
