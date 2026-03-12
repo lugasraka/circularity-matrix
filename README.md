@@ -6,6 +6,12 @@ Users answer 8 questions across three dimensions — access difficulty, process 
 
 On a personal note, I built this project as I worked on portfolio circularity assessments at a large industrial tech company. I wanted a simple, interactive way to apply the HBR framework to our products and communicate strategy recommendations to stakeholders. This tool is the result — a lightweight, client-side app that can be easily deployed and shared.
 
+## Demo/Screenshot
+
+![Homepage-Circularity Matrix](public/{4967DBBC-6709-4719-9314-58E10232F54E}.png)
+
+![Portffolio-Circularity Visualization](public/{C184AC68-01DD-46D3-A011-9916E1992EBE}.png)
+
 ## Features
 
 - **Assessment wizard** — 8-question questionnaire that scores and places a product on the matrix
