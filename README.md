@@ -10,7 +10,7 @@ On a personal note, I built this project as I worked on portfolio circularity as
 
 ## Demo/Screenshot
 
-![Homepage-Circularity Matrix](public/{4967DBBC-6709-4719-9314-58E10232F54E}.png)
+![Homepage-Circularity Matrix](public/{0C157B32-D906-488F-9EEC-8D3C9C63C5BF}.png)
 
 ![Portffolio-Circularity Visualization](public/{C184AC68-01DD-46D3-A011-9916E1992EBE}.png)
 
@@ -19,9 +19,13 @@ On a personal note, I built this project as I worked on portfolio circularity as
 - **Assessment wizard** — 8-question questionnaire that scores and places a product on the matrix
 - **Matrix visualization** — SVG-based 2x2 grid with embedded value sub-cells and numbered product pins
 - **Multi-product portfolio** — Assess multiple products and compare them on a single matrix
+- **Product management** — Edit existing products, duplicate for variations, search and filter your portfolio
 - **What-if analysis** — Toggle embedded value to see how the recommendation shifts
+- **Data portability** — Export portfolio as JSON (backup/sharing) or CSV (analysis), import JSON backups
+- **Share assessments** — Generate shareable URLs for individual products
 - **PDF report** — Client-side export of the full portfolio with matrix visualization and per-product details
 - **Matrix explorer** — Browse all 8 cells and their strategies without taking the quiz
+- **Onboarding** — First-time tutorial and persistent help panel
 
 ## Tech Stack
 
@@ -54,8 +58,8 @@ Produces a static export in `out/`. Deploy to any static host (Vercel, Netlify, 
 ```
 src/
 ├── app/          Pages (landing, assess, portfolio, explore)
-├── components/   UI components (matrix, wizard, results, product list)
-└── lib/          Domain logic (types, questions, scoring, strategies, PDF)
+├── components/   UI components (matrix, wizard, results, product list, onboarding, help panel)
+└── lib/          Domain logic (types, questions, scoring, strategies, PDF, share-utils)
 ```
 
 ## License
@@ -63,8 +67,11 @@ src/
 MIT
 
 ## Created by
-[Raka Adrianto, Sustainability Product Manager](https://github.com/lugasraka)
+**Raka Adrianto** — Sustainability Product Manager
 
---
+- GitHub: [@lugasraka](https://github.com/lugasraka)
+- LinkedIn: [linkedin.com/in/lugasraka](https://www.linkedin.com/in/lugasraka/)
+
+---
 
 Any feedback or contributions are welcome! Please open an issue or submit a pull request.

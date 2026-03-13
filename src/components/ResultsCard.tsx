@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { AssessmentResult, CellStrategy, StrategyType } from "../lib/types";
 import { strategyDescriptions } from "../lib/strategies";
+import { copyShareURL } from "../lib/share-utils";
 
 interface ResultsCardProps {
   productName: string;
   result: AssessmentResult;
+  productId?: string;
+  answers?: { questionId: string; value: number }[];
 }
 
 const STRATEGY_COLORS: Record<StrategyType, string> = {
@@ -81,8 +84,9 @@ function CellDetail({ cell, isWhatIf }: { cell: CellStrategy; isWhatIf: boolean 
   );
 }
 
-export default function ResultsCard({ productName, result }: ResultsCardProps) {
+export default function ResultsCard({ productName, result, productId, answers }: ResultsCardProps) {
   const [showWhatIf, setShowWhatIf] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const { scores, position, cell, whatIfCell } = result;
 
@@ -91,27 +95,72 @@ export default function ResultsCard({ productName, result }: ResultsCardProps) {
     new Set([...cell.strategies, ...whatIfCell.strategies])
   );
 
+  const handleShare = async () => {
+    if (!productId || !answers) return;
+    
+    const product = {
+      id: productId,
+      name: productName,
+      answers,
+      result,
+      createdAt: Date.now(),
+    };
+    
+    const success = await copyShareURL(product);
+    if (success) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">
-          Results for &quot;{productName}&quot;
-        </h2>
-        <p className="text-gray-500">
-          Your product maps to:{" "}
-          <span className="font-medium text-gray-700">
-            {position.access === "hard" ? "Hard" : "Easy"} Access
-          </span>
-          {" × "}
-          <span className="font-medium text-gray-700">
-            {position.process === "hard" ? "Hard" : "Easy"} Process
-          </span>
-          {" × "}
-          <span className="font-medium text-gray-700">
-            {position.embeddedValue === "high" ? "High" : "Low"} Embedded Value
-          </span>
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              Results for &quot;{productName}&quot;
+            </h2>
+            <p className="text-gray-500">
+              Your product maps to:{" "}
+              <span className="font-medium text-gray-700">
+                {position.access === "hard" ? "Hard" : "Easy"} Access
+              </span>
+              {" × "}
+              <span className="font-medium text-gray-700">
+                {position.process === "hard" ? "Hard" : "Easy"} Process
+              </span>
+              {" × "}
+              <span className="font-medium text-gray-700">
+                {position.embeddedValue === "high" ? "High" : "Low"} Embedded Value
+              </span>
+            </p>
+          </div>
+          {productId && answers && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+              title="Copy shareable link"
+            >
+              {shareCopied ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  Share
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Scores */}

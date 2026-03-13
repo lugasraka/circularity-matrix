@@ -3,7 +3,7 @@
 ## 1. Overview
 
 **Product Name:** Circularity Matrix  
-**Version:** 1.0  
+**Version:** 1.1  
 **Framework Reference:** Atasu, Dumas & Van Wassenhove, "The Circular Business Model," *Harvard Business Review* (July–August 2021)
 
 ### 1.1 Purpose
@@ -22,6 +22,9 @@ A web-based decision-support tool that helps users identify which circular econo
 - Structured assessment replaces ad-hoc strategy selection  
 - Multi-product portfolio view reveals strategic patterns across a product line  
 - What-if analysis shows how changing embedded value shifts recommendations  
+- **Product management** — edit, duplicate, and organize products with search and filters  
+- **Data portability** — export/import portfolio as JSON or CSV for backup and analysis  
+- **Shareable assessments** — generate URLs to share individual product results  
 - Exportable PDF reports support stakeholder communication
 
 ---
@@ -79,6 +82,7 @@ Users answer 8 questions to place a product on the matrix.
 **Question Design:**
 - Each question offers 5 options scored 1–5  
 - Options include a short label and a descriptive sentence  
+- **Examples expander** — toggle to see concrete product examples for each option level  
 - Progress bar shows current step and active dimension label  
 - Back/Next navigation; final step triggers scoring
 
@@ -97,7 +101,8 @@ Displayed after completing the questionnaire and when selecting a product in the
 - **Position label** — e.g., "Hard Access × Easy Process × High Embedded Value"  
 - **Recommended strategy** — Cell label, color-coded strategy badges, description, real-world examples, implementation guidance  
 - **What-if toggle** — Expands a panel showing the strategy recommendation if embedded value were flipped (High → Low or Low → High), same detail format  
-- **Strategy glossary** — Brief definitions of RPO, PLE, and DFR for reference
+- **Strategy glossary** — Brief definitions of RPO, PLE, and DFR for reference  
+- **Share button** — Copy a shareable URL to the clipboard for this specific assessment
 
 ### 3.3 Circularity Matrix Visualization
 
@@ -107,10 +112,12 @@ An SVG-based 2×2 matrix with embedded value sub-cells.
 - Color-coded cells (blue, green, yellow, pink tints)  
 - Strategy labels inside each sub-cell  
 - Numbered product pins (up to 15 distinct colors) placed in the cell matching each product's position  
+- **Interactive pins** — hover for rich tooltips, click to select the product  
 - Highlighted border on the selected/active cell  
 - Clickable cells (on the Explore page)  
 - Compact mode available for sidebar use  
-- Axis labels: "Process Difficulty" (x-axis), "Access Difficulty" (y-axis)
+- Axis labels: "Process Difficulty" (x-axis), "Access Difficulty" (y-axis)  
+- **Product legend** — sidebar component mapping colors to product names
 
 ### 3.4 Multi-Product Portfolio
 
@@ -119,16 +126,25 @@ An SVG-based 2×2 matrix with embedded value sub-cells.
 Supports assessing and comparing multiple products on a single matrix.
 
 **Layout (3-column on desktop):**
-- **Sidebar** — Scrollable product list with colored dots matching matrix pins, strategy badges, position shorthand (e.g., H/E/H), and remove buttons. Strategy distribution summary below (count and percentage per unique strategy combination).  
-- **Center** — Full matrix visualization with all product pins. Highlights the cell of the currently selected product.  
+- **Sidebar** — Scrollable product list with colored dots matching matrix pins, strategy badges, position shorthand (e.g., H/E/H), and action buttons  
+- **Center** — Full matrix visualization with all product pins. Highlights the cell of the currently selected product. Pins are clickable to select products.  
 - **Right panel** — Full results card for the selected product (scores, strategy, what-if, guidance).
 
 **Management:**
 - Add products via the assessment wizard  
+- **Edit products** — pencil icon reopens wizard with pre-filled answers  
+- **Duplicate products** — copy icon creates a duplicate for quick variation testing  
 - Remove individual products (instant, no confirmation)  
 - Clear all products (two-step confirmation)  
+- **Search and filter** — filter by name, strategy, or dimension values  
 - Soft warning displayed when portfolio exceeds 15 products  
 - State persisted to `localStorage` under key `circularity-matrix-portfolio`
+
+**Data Portability:**
+- **Export JSON** — download portfolio as `.json` for backup/sharing  
+- **Export CSV** — download portfolio as `.csv` for spreadsheet analysis  
+- **Import JSON** — upload previously exported portfolios to merge with current data  
+- **PDF Report** — client-side generated multi-page report
 
 ### 3.5 Matrix Explorer
 
@@ -139,7 +155,7 @@ Standalone interactive reference. No assessment required.
 **Features:**
 - Click any of the 8 cells to view its strategy details (label, description, examples, guidance, strategy definitions)  
 - Axis explanation cards describe what Access and Process dimensions mean  
-- Products from the portfolio appear as pins on the matrix for context  
+- Products from the portfolio appear as pins on the matrix for context
 
 ### 3.6 PDF Report Generation
 
@@ -161,6 +177,22 @@ Standalone interactive reference. No assessment required.
 - Strategy overview cards for RPO, PLE, and DFR with icons and descriptions  
 - Bottom CTA to begin assessment
 
+### 3.8 Onboarding & Help
+
+**First-time User Tutorial:**
+- 4-step modal shown on first visit  
+- Covers: framework overview, three dimensions, three strategies, portfolio features  
+- Dismissible; tracks completion in localStorage
+
+**Help Panel:**
+- Accessible from any page via (?) button in navigation  
+- Slide-out panel with expandable sections:  
+  - About the Framework  
+  - The Three Strategies  
+  - How Scoring Works  
+  - Usage Tips  
+  - External Resources (HBR article, GitHub, LinkedIn)
+
 ---
 
 ## 4. Information Architecture
@@ -172,7 +204,7 @@ Standalone interactive reference. No assessment required.
 /explore           Interactive matrix explorer
 ```
 
-Persistent top navigation bar across all pages with active-state highlighting.
+Persistent top navigation bar across all pages with active-state highlighting and help button.
 
 ---
 
@@ -185,6 +217,7 @@ Persistent top navigation bar across all pages with active-state highlighting.
 | State Management | React Context + `localStorage` persistence |
 | PDF Generation | jsPDF (client-side, dynamically imported) |
 | Matrix Rendering | Custom SVG (no charting library) |
+| URL Sharing | Base64-encoded product data |
 | Deployment Target | Static export (`output: 'export'`) — Vercel, Netlify, or any static host |
 
 **Key Architectural Decisions:**
@@ -218,13 +251,39 @@ Persistent top navigation bar across all pages with active-state highlighting.
 
 ---
 
-## 8. Future Considerations
+## 8. Changelog
 
-These are out of scope for v1.0 but represent logical extensions:
+### v1.1 (March 2025)
+- **Product management** — Edit and duplicate products  
+- **Search and filter** — Portfolio sidebar with search by name/strategy, dimension filters  
+- **Data portability** — Export portfolio as JSON or CSV; import JSON backups  
+- **Shareable assessments** — Generate URLs to share individual products  
+- **Interactive matrix** — Clickable pins with tooltips; product legend  
+- **Questionnaire improvements** — Examples expander for each dimension  
+- **Onboarding** — First-time tutorial and persistent help panel  
+- **UI polish** — Better navigation, action buttons, and visual feedback
 
-- **Export/import portfolio as JSON** for sharing between browsers or team members  
+### v1.0 (Initial Release)
+- Core assessment wizard with 8 questions  
+- Matrix visualization with SVG rendering  
+- Multi-product portfolio  
+- What-if analysis  
+- PDF report generation  
+- Matrix explorer
+
+---
+
+## 9. Future Considerations
+
+These represent potential future extensions:
+
 - **Comparison mode** to show two products side-by-side with dimension deltas  
 - **Custom questions** allowing industry-specific question sets  
 - **Server-side persistence** with user accounts for team collaboration  
 - **Weighted scoring** letting users adjust dimension importance  
 - **Localization** for non-English markets
+
+---
+
+**Created by:** [Raka Adrianto](https://github.com/lugasraka)  
+**LinkedIn:** [linkedin.com/in/lugasraka](https://www.linkedin.com/in/lugasraka/)

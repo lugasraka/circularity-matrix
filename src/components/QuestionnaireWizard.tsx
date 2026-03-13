@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Answer, AssessmentResult } from "../lib/types";
 import { questions } from "../lib/questions";
 import { assess } from "../lib/scoring";
@@ -9,15 +9,36 @@ import QuestionCard from "./QuestionCard";
 interface QuestionnaireWizardProps {
   onComplete: (name: string, answers: Answer[], result: AssessmentResult) => void;
   onCancel?: () => void;
+  // For editing existing product
+  initialProductName?: string;
+  initialAnswers?: Answer[];
+  editingProductId?: string;
 }
 
 export default function QuestionnaireWizard({
   onComplete,
   onCancel,
+  initialProductName = "",
+  initialAnswers,
+  editingProductId,
 }: QuestionnaireWizardProps) {
-  const [productName, setProductName] = useState("");
+  const [productName, setProductName] = useState(initialProductName);
   const [step, setStep] = useState(-1); // -1 = name input step
   const [answers, setAnswers] = useState<Record<string, number>>({});
+
+  // Initialize from props (editing mode only)
+  useEffect(() => {
+    if (initialAnswers && initialAnswers.length > 0) {
+      // Editing mode - load existing answers
+      const answerMap: Record<string, number> = {};
+      initialAnswers.forEach((a) => {
+        answerMap[a.questionId] = a.value;
+      });
+      setAnswers(answerMap);
+      setProductName(initialProductName);
+      setStep(-1);
+    }
+  }, [initialAnswers, initialProductName]);
 
   const totalSteps = questions.length;
   const currentQuestion = step >= 0 ? questions[step] : null;
@@ -26,12 +47,12 @@ export default function QuestionnaireWizard({
   const canGoNext =
     step === -1 ? productName.trim().length > 0 : currentAnswer !== null;
 
-  function handleSelect(value: number) {
+  const handleSelect = (value: number) => {
     if (!currentQuestion) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }));
-  }
+  };
 
-  function handleNext() {
+  const handleNext = () => {
     if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
@@ -43,13 +64,13 @@ export default function QuestionnaireWizard({
       const result = assess(answerList);
       onComplete(productName.trim(), answerList, result);
     }
-  }
+  };
 
-  function handleBack() {
+  const handleBack = () => {
     if (step > -1) {
       setStep(step - 1);
     }
-  }
+  };
 
   const progress = step === -1 ? 0 : ((step + 1) / totalSteps) * 100;
 
@@ -88,7 +109,7 @@ export default function QuestionnaireWizard({
       {step === -1 ? (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            What product are you assessing?
+            {editingProductId ? "Edit Product Name" : "What product are you assessing?"}
           </h3>
           <p className="text-sm text-gray-500 mb-6">
             Give your product a descriptive name so you can identify it in your
@@ -144,7 +165,11 @@ export default function QuestionnaireWizard({
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
-          {step === totalSteps - 1 ? "See Results" : "Next →"}
+          {step === totalSteps - 1
+            ? editingProductId
+              ? "Save Changes"
+              : "See Results"
+            : "Next →"}
         </button>
       </div>
     </div>
