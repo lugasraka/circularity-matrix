@@ -38,9 +38,12 @@ export default function HomePage() {
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-2">
           Find the right circular economy strategy for your products
         </p>
-        <p className="text-sm text-gray-400 mb-8">
+        <p className="text-sm text-gray-400 mb-2">
           Based on the HBR Circularity Matrix framework by Atasu, Dumas &amp;
           Van Wassenhove (2021)
+        </p>
+        <p className="text-sm text-gray-500 mb-8">
+          AI-Powered · 12+ Product Templates · Financial ROI Calculator · Implementation Roadmaps
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
@@ -63,25 +66,31 @@ export default function HomePage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
           How It Works
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
             {
               step: "1",
-              title: "Assess Your Product",
+              title: "Start with AI or Templates",
               description:
-                "Answer 8 questions about your product's accessibility, processing complexity, and embedded value.",
+                "Choose from 12+ product templates or use AI assistance to get instant answer suggestions based on your product description.",
             },
             {
               step: "2",
-              title: "Get Your Strategy",
+              title: "Assess Your Product",
               description:
-                "See which circular strategy (or combination) fits your product, with real-world examples and guidance.",
+                "Review and refine 8 questions across Access, Process, and Embedded Value dimensions. Smart defaults save you time.",
             },
             {
               step: "3",
+              title: "Get Strategy + Roadmap",
+              description:
+                "Receive your recommended circular strategy with a detailed implementation roadmap, financial projections, and real-world case studies.",
+            },
+            {
+              step: "4",
               title: "Build Your Portfolio",
               description:
-                "Assess multiple products, visualize them on the matrix, and generate a PDF report.",
+                "Track multiple products on the matrix, compare strategies, export PDF reports, and share assessments with your team.",
             },
           ].map((item) => (
             <div key={item.step} className="text-center">
@@ -129,14 +138,22 @@ export default function HomePage() {
           Ready to find the right strategy?
         </h2>
         <p className="text-gray-500 mb-4">
-          Assess your first product in under 3 minutes.
+          Start from a template or use AI assistance — assess your first product in under 1 minute.
         </p>
-        <Link
-          href="/assess"
-          className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Start Assessment →
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/assess"
+            className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Start Assessment →
+          </Link>
+          <Link
+            href="/explore"
+            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-white transition-colors"
+          >
+            Explore the Matrix
+          </Link>
+        </div>
       </div>
 
       {/* Creator credit */}

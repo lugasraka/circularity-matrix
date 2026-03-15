@@ -6,7 +6,7 @@ Users answer 8 questions across three dimensions — access difficulty, process 
 
 On a personal note, I built this project as I worked on portfolio circularity assessments at a large industrial tech company. I wanted a simple, interactive way to apply the HBR framework to our products and communicate strategy recommendations to stakeholders. This tool is the result — a lightweight, client-side app that can be easily deployed and shared.
 
-### Access the live demo of the [Circularity-Matrix App](https://circularity-matrix.vercel.app/)
+### Live Demo: [circularity-matrix.vercel.app](https://circularity-matrix.vercel.app/)
 
 ## Demo/Screenshot
 
@@ -16,25 +16,30 @@ On a personal note, I built this project as I worked on portfolio circularity as
 
 ## Features
 
-- **Assessment wizard** — 8-question questionnaire that scores and places a product on the matrix
-- **Matrix visualization** — SVG-based 2x2 grid with embedded value sub-cells and numbered product pins
-- **Multi-product portfolio** — Assess multiple products and compare them on a single matrix
-- **Product management** — Edit existing products, duplicate for variations, search and filter your portfolio
-- **What-if analysis** — Toggle embedded value to see how the recommendation shifts
-- **Data portability** — Export portfolio as JSON (backup/sharing) or CSV (analysis), import JSON backups
-- **Share assessments** — Generate shareable URLs for individual products
-- **PDF report** — Client-side export of the full portfolio with matrix visualization and per-product details
-- **Matrix explorer** — Browse all 8 cells and their strategies without taking the quiz
-- **Onboarding** — First-time tutorial and persistent help panel
+- **Assessment presets** — 12+ product templates (smartphone, laptop, packaging, etc.) for instant assessment
+- **AI-assisted assessment** — Client-side AI suggests answers based on product description
+- **Assessment wizard** — 8-question questionnaire with smart defaults and progress tracking
+- **Strategy recommendations** — RPO, PLE, DFR strategies with real-world examples and guidance
+- **Implementation roadmaps** — Phase-by-phase action plans (0-6 months, 6-18 months, 18+ months)
+- **Financial calculator** — ROI estimates, payback periods, and 5-year NPV projections
+- **Matrix visualization** — SVG-based 2x2 grid with interactive product pins
+- **Multi-product portfolio** — Assess multiple products and compare on a single matrix
+- **Product management** — Edit, duplicate, search, and filter your portfolio
+- **What-if analysis** — Toggle embedded value to see strategy shifts
+- **Data portability** — Export as JSON/CSV, import JSON backups
+- **Share assessments** — Generate shareable URLs
+- **PDF report** — Client-side export with portfolio overview, matrix, and per-product details
+- **Matrix explorer** — Browse all 8 cells without taking the quiz
+- **Onboarding** — First-time tutorial and help panel
 
 ## Tech Stack
 
 - Next.js (App Router, TypeScript, static export)
 - Tailwind CSS v4
-- jsPDF (client-side PDF generation, dynamically imported)
-- React Context + localStorage for state persistence
+- jsPDF (client-side PDF generation)
+- React Context + localStorage for state
 
-No backend. No database. Deploys as a static site.
+No backend. No database. No external API calls. Deploys as a static site.
 
 ## Getting Started
 
@@ -58,8 +63,8 @@ Produces a static export in `out/`. Deploy to any static host (Vercel, Netlify, 
 ```
 src/
 ├── app/          Pages (landing, assess, portfolio, explore)
-├── components/   UI components (matrix, wizard, results, product list, onboarding, help panel)
-└── lib/          Domain logic (types, questions, scoring, strategies, PDF, share-utils)
+├── components/   UI components (matrix, wizard, results, roadmaps, financial calc)
+└── lib/          Domain logic (types, questions, scoring, strategies, presets, AI, PDF)
 ```
 
 ## License
@@ -74,4 +79,4 @@ MIT
 
 ---
 
-Any feedback or contributions are welcome! Please open an issue or submit a pull request.
+Feedback and contributions welcome! Open an issue or submit a pull request.

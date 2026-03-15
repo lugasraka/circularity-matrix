@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AssessmentResult, CellStrategy, StrategyType } from "../lib/types";
 import { strategyDescriptions } from "../lib/strategies";
 import { copyShareURL } from "../lib/share-utils";
+import RoadmapPanel from "./RoadmapPanel";
+import FinancialCalculator from "./FinancialCalculator";
 
 interface ResultsCardProps {
   productName: string;
@@ -87,6 +89,7 @@ function CellDetail({ cell, isWhatIf }: { cell: CellStrategy; isWhatIf: boolean 
 export default function ResultsCard({ productName, result, productId, answers }: ResultsCardProps) {
   const [showWhatIf, setShowWhatIf] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [activeSection, setActiveSection] = useState<"main" | "roadmap" | "financial">("main");
 
   const { scores, position, cell, whatIfCell } = result;
 
@@ -231,6 +234,44 @@ export default function ResultsCard({ productName, result, productId, answers }:
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Additional Tools */}
+      <div className="border-t pt-4 mt-4">
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveSection(activeSection === "roadmap" ? "main" : "roadmap")}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+              activeSection === "roadmap"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            📋 Implementation Roadmap
+          </button>
+          <button
+            onClick={() => setActiveSection(activeSection === "financial" ? "main" : "financial")}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+              activeSection === "financial"
+                ? "bg-green-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            💰 Financial Calculator
+          </button>
+        </div>
+
+        {activeSection === "roadmap" && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+            <RoadmapPanel cell={cell} />
+          </div>
+        )}
+
+        {activeSection === "financial" && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+            <FinancialCalculator productName={productName} result={result} />
+          </div>
+        )}
       </div>
     </div>
   );

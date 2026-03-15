@@ -5,6 +5,9 @@ import { Answer, AssessmentResult } from "../lib/types";
 import { questions } from "../lib/questions";
 import { assess } from "../lib/scoring";
 import QuestionCard from "./QuestionCard";
+import PresetSelector from "./PresetSelector";
+import AIAssistantPanel from "./AIAssistantPanel";
+import { ProductPreset, getPresetAnswersMap } from "../lib/presets";
 
 interface QuestionnaireWizardProps {
   onComplete: (name: string, answers: Answer[], result: AssessmentResult) => void;
@@ -23,8 +26,9 @@ export default function QuestionnaireWizard({
   editingProductId,
 }: QuestionnaireWizardProps) {
   const [productName, setProductName] = useState(initialProductName);
-  const [step, setStep] = useState(-1); // -1 = name input step
+  const [step, setStep] = useState(-1); // -1 = name input step, -2 = preset selection
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [showPresets, setShowPresets] = useState(!editingProductId && !initialAnswers);
 
   // Initialize from props (editing mode only)
   useEffect(() => {
@@ -37,8 +41,29 @@ export default function QuestionnaireWizard({
       setAnswers(answerMap);
       setProductName(initialProductName);
       setStep(-1);
+      setShowPresets(false);
+    } else if (!editingProductId) {
+      // New product - show presets first
+      setStep(-2);
+      setShowPresets(true);
     }
-  }, [initialAnswers, initialProductName]);
+  }, [initialAnswers, initialProductName, editingProductId]);
+
+  const handleSelectPreset = (preset: ProductPreset) => {
+    setProductName(preset.name);
+    setAnswers(getPresetAnswersMap(preset));
+    setShowPresets(false);
+    setStep(-1); // Go to name step (pre-filled)
+  };
+
+  const handleSkipPresets = () => {
+    setShowPresets(false);
+    setStep(-1);
+  };
+
+  const handleApplyAISuggestions = (suggestions: Record<string, number>) => {
+    setAnswers((prev) => ({ ...prev, ...suggestions }));
+  };
 
   const totalSteps = questions.length;
   const currentQuestion = step >= 0 ? questions[step] : null;
@@ -53,13 +78,16 @@ export default function QuestionnaireWizard({
   };
 
   const handleNext = () => {
-    if (step < totalSteps - 1) {
+    if (step === -1) {
+      // Move from name step to first question
+      setStep(0);
+    } else if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
       // Complete
       const answerList: Answer[] = questions.map((q) => ({
         questionId: q.id,
-        value: answers[q.id],
+        value: answers[q.id] ?? 3, // Default to neutral if somehow missing
       }));
       const result = assess(answerList);
       onComplete(productName.trim(), answerList, result);
@@ -106,11 +134,23 @@ export default function QuestionnaireWizard({
       </div>
 
       {/* Content */}
-      {step === -1 ? (
+      {step === -2 && showPresets ? (
+        <PresetSelector onSelectPreset={handleSelectPreset} onSkip={handleSkipPresets} />
+      ) : step === -1 ? (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {editingProductId ? "Edit Product Name" : "What product are you assessing?"}
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {editingProductId ? "Edit Product Name" : "What product are you assessing?"}
+            </h3>
+            {!editingProductId && (
+              <button
+                onClick={() => setShowPresets(true)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                ← Back to templates
+              </button>
+            )}
+          </div>
           <p className="text-sm text-gray-500 mb-6">
             Give your product a descriptive name so you can identify it in your
             portfolio.
@@ -126,6 +166,17 @@ export default function QuestionnaireWizard({
             }}
             autoFocus
           />
+          
+          {/* AI Assistant */}
+          {!editingProductId && (
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <AIAssistantPanel
+                productName={productName}
+                onApplySuggestions={handleApplyAISuggestions}
+                currentAnswers={answers}
+              />
+            </div>
+          )}
         </div>
       ) : currentQuestion ? (
         <QuestionCard
