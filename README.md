@@ -16,21 +16,11 @@ On a personal note, I built this project as I worked on portfolio circularity as
 
 ## Features
 
-- **Assessment presets** — 12+ product templates (smartphone, laptop, packaging, etc.) for instant assessment
-- **AI-assisted assessment** — Client-side AI suggests answers based on product description
-- **Assessment wizard** — 8-question questionnaire with smart defaults and progress tracking
-- **Strategy recommendations** — RPO, PLE, DFR strategies with real-world examples and guidance
-- **Implementation roadmaps** — Phase-by-phase action plans (0-6 months, 6-18 months, 18+ months)
-- **Financial calculator** — ROI estimates, payback periods, and 5-year NPV projections
-- **Matrix visualization** — SVG-based 2x2 grid with interactive product pins
-- **Multi-product portfolio** — Assess multiple products and compare on a single matrix
-- **Product management** — Edit, duplicate, search, and filter your portfolio
-- **What-if analysis** — Toggle embedded value to see strategy shifts
-- **Data portability** — Export as JSON/CSV, import JSON backups
-- **Share assessments** — Generate shareable URLs
-- **PDF report** — Client-side export with portfolio overview, matrix, and per-product details
-- **Matrix explorer** — Browse all 8 cells without taking the quiz
-- **Onboarding** — First-time tutorial and help panel
+- **Assessment wizard** — 8-question questionnaire with presets, AI-assisted answers, and what-if analysis
+- **Strategy recommendations** — RPO, PLE, and DFR strategies with examples, roadmaps, and financial projections
+- **Portfolio management** — Track and compare multiple products on a single interactive matrix
+- **Export & share** — Download PDF reports, export JSON/CSV, or share via URL
+- **Matrix explorer** — Browse all 8 strategy cells without taking the assessment
 
 ## Tech Stack
 
