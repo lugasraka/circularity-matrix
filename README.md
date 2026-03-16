@@ -10,9 +10,7 @@ On a personal note, I built this project as I worked on portfolio circularity as
 
 ## Demo/Screenshot
 
-![Homepage-Circularity Matrix](public/{0C157B32-D906-488F-9EEC-8D3C9C63C5BF}.png)
-
-![Portffolio-Circularity Visualization](public/{C184AC68-01DD-46D3-A011-9916E1992EBE}.png)
+![Video-Circularity Matrix](public/circularity-matrix-demo.gif)
 
 ## Features
 
