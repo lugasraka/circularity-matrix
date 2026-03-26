@@ -610,7 +610,8 @@ export function hasRecognizablePattern(productName: string): boolean {
 }
 
 // R-Strategy category patterns with typical answers
-type RStrategyCriterion = "durability" | "upgradability" | "market-demand" | "collection-infra" | "reverse-logistics" | "labor-expertise" | "regulations";
+// Matches actual criteria IDs from criteria.ts
+type RStrategyCriterion = "absolute-product-value" | "product-durability" | "regulatory-pressure" | "technological-change" | "logistics-handling" | "value-recovery" | "embedded-value";
 
 interface RStrategyCategoryPattern {
   name: string;
@@ -623,97 +624,97 @@ const rStrategyCategoryPatterns: RStrategyCategoryPattern[] = [
     name: "Consumer Electronics",
     keywords: ["phone", "smartphone", "laptop", "computer", "tablet", "device", "electronics", "screen"],
     typicalAnswers: {
-      "durability": 3, "upgradability": 4, "market-demand": 4,
-      "collection-infra": 4, "reverse-logistics": 3, "labor-expertise": 4, "regulations": 4,
+      "absolute-product-value": 4, "product-durability": 3, "regulatory-pressure": 4, "technological-change": 4,
+      "logistics-handling": 4, "value-recovery": 3, "embedded-value": 4,
     },
   },
   {
     name: "Apparel & Textiles",
     keywords: ["shirt", "pants", "dress", "shoe", "clothing", "apparel", "textile", "fabric"],
     typicalAnswers: {
-      "durability": 3, "upgradability": 1, "market-demand": 3,
-      "collection-infra": 3, "reverse-logistics": 3, "labor-expertise": 2, "regulations": 2,
+      "absolute-product-value": 2, "product-durability": 2, "regulatory-pressure": 2, "technological-change": 1,
+      "logistics-handling": 3, "value-recovery": 2, "embedded-value": 2,
     },
   },
   {
     name: "Industrial Equipment",
     keywords: ["machine", "equipment", "industrial", "machinery", "pump", "compressor", "motor"],
     typicalAnswers: {
-      "durability": 5, "upgradability": 3, "market-demand": 4,
-      "collection-infra": 3, "reverse-logistics": 2, "labor-expertise": 3, "regulations": 3,
+      "absolute-product-value": 5, "product-durability": 5, "regulatory-pressure": 2, "technological-change": 2,
+      "logistics-handling": 3, "value-recovery": 4, "embedded-value": 4,
     },
   },
   {
     name: "Automotive",
     keywords: ["car", "vehicle", "automotive", "tire", "battery", "ev", "truck"],
     typicalAnswers: {
-      "durability": 4, "upgradability": 3, "market-demand": 4,
-      "collection-infra": 4, "reverse-logistics": 3, "labor-expertise": 3, "regulations": 5,
+      "absolute-product-value": 4, "product-durability": 4, "regulatory-pressure": 4, "technological-change": 3,
+      "logistics-handling": 4, "value-recovery": 4, "embedded-value": 4,
     },
   },
   {
     name: "Building Materials",
     keywords: ["carpet", "flooring", "tile", "insulation", "roofing", "window", "construction"],
     typicalAnswers: {
-      "durability": 4, "upgradability": 2, "market-demand": 3,
-      "collection-infra": 3, "reverse-logistics": 3, "labor-expertise": 2, "regulations": 3,
+      "absolute-product-value": 2, "product-durability": 4, "regulatory-pressure": 3, "technological-change": 2,
+      "logistics-handling": 3, "value-recovery": 2, "embedded-value": 2,
     },
   },
   {
     name: "Packaging",
     keywords: ["packaging", "container", "bottle", "box", "carton", "wrapper"],
     typicalAnswers: {
-      "durability": 2, "upgradability": 1, "market-demand": 2,
-      "collection-infra": 4, "reverse-logistics": 4, "labor-expertise": 2, "regulations": 4,
+      "absolute-product-value": 1, "product-durability": 1, "regulatory-pressure": 3, "technological-change": 1,
+      "logistics-handling": 5, "value-recovery": 5, "embedded-value": 1,
     },
   },
   {
     name: "Medical Devices",
     keywords: ["medical", "healthcare", "hospital", "clinical", "diagnostic", "surgical"],
     typicalAnswers: {
-      "durability": 4, "upgradability": 3, "market-demand": 3,
-      "collection-infra": 2, "reverse-logistics": 2, "labor-expertise": 4, "regulations": 5,
+      "absolute-product-value": 4, "product-durability": 4, "regulatory-pressure": 5, "technological-change": 3,
+      "logistics-handling": 2, "value-recovery": 3, "embedded-value": 4,
     },
   },
   {
     name: "Furniture",
     keywords: ["furniture", "chair", "table", "desk", "sofa", "cabinet", "shelf"],
     typicalAnswers: {
-      "durability": 4, "upgradability": 2, "market-demand": 3,
-      "collection-infra": 3, "reverse-logistics": 3, "labor-expertise": 3, "regulations": 2,
+      "absolute-product-value": 3, "product-durability": 4, "regulatory-pressure": 2, "technological-change": 1,
+      "logistics-handling": 3, "value-recovery": 3, "embedded-value": 3,
     },
   },
 ];
 
-// R-Strategy criterion hints
-const rStrategyCriterionHints: Record<string, { high: string[]; low: string[] }> = {
-  "durability": {
+// R-Strategy criterion hints - keyed by actual criterion IDs
+const rStrategyCriterionHints: Record<RStrategyCriterion, { high: string[]; low: string[] }> = {
+  "absolute-product-value": {
+    high: ["expensive", "premium", "high-end", "luxury", "valuable", "costly", "pricey"],
+    low: ["cheap", "inexpensive", "low-cost", "budget", "disposable-price", "affordable"],
+  },
+  "product-durability": {
     high: ["robust", "durable", "long-lasting", "heavy-duty", "industrial-grade", "metal", "solid"],
     low: ["fragile", "disposable", "single-use", "lightweight", "plastic", "temporary"],
   },
-  "upgradability": {
-    high: ["modular", "upgradeable", "swappable", "expandable", "software-updatable", "configurable"],
-    low: ["sealed", "integrated", "fixed", "proprietary", "closed-system"],
+  "regulatory-pressure": {
+    high: ["regulated", "compliant", "standardized", "certified", "e-waste", "battery-directive", "mandatory"],
+    low: ["unregulated", "new-category", "no-standards", "emerging-market", "voluntary"],
   },
-  "market-demand": {
-    high: ["popular", "high-demand", "premium", "vintage", "collectible", "limited-edition"],
-    low: ["obsolete", "outdated", "niche", "specialized", "deprecated"],
+  "technological-change": {
+    high: ["fast", "rapid", "obsolete-quickly", "cutting-edge", "rapidly-evolving"],
+    low: ["slow", "stable", "mature", "unchanging", "standardized-tech"],
   },
-  "collection-infra": {
-    high: ["widespread", "established", "retail-network", "global", "ubiquitous"],
-    low: ["limited", "regional", "scarce", "undeveloped", "new-market"],
+  "logistics-handling": {
+    high: ["widespread", "established", "easy-to-collect", "global", "ubiquitous", "standardized-logistics"],
+    low: ["limited", "regional", "scarce", "undeveloped", "remote", "difficult-access"],
   },
-  "reverse-logistics": {
-    high: ["efficient", "cost-effective", "streamlined", "optimized", "existing-network"],
-    low: ["expensive", "complex", "difficult", "no-infrastructure", "challenging"],
+  "value-recovery": {
+    high: ["easy-to-repair", "modular", "serviceable", "accessible", "standard-parts"],
+    low: ["sealed", "integrated", "proprietary", "glued", "bonded", "irreparable"],
   },
-  "labor-expertise": {
-    high: ["skilled-workforce", "trained", "expert", "certified", "experienced"],
-    low: ["unskilled", "rare-expertise", "specialized-training", "scarce-talent"],
-  },
-  "regulations": {
-    high: ["regulated", "compliant", "standardized", "certified", "e-waste", "battery-directive"],
-    low: ["unregulated", "new-category", "no-standards", "emerging-market"],
+  "embedded-value": {
+    high: ["precious-materials", "rare-earth", "gold", "silver", "copper", "aluminum", "high-quality"],
+    low: ["low-grade", "commodity", "mixed-materials", "contaminated", "low-purity"],
   },
 };
 
@@ -751,7 +752,18 @@ export function analyzeProductDescriptionRStrategy(
   }
 
   // Generate suggestions for each criterion
-  const criteriaIds: RStrategyCriterion[] = ["durability", "upgradability", "market-demand", "collection-infra", "reverse-logistics", "labor-expertise", "regulations"];
+  const criteriaIds: RStrategyCriterion[] = ["absolute-product-value", "product-durability", "regulatory-pressure", "technological-change", "logistics-handling", "value-recovery", "embedded-value"];
+  
+  // Map criterionId to question ID
+  const questionIdMap: Record<RStrategyCriterion, string> = {
+    "absolute-product-value": "q-absolute-product-value",
+    "product-durability": "q-product-durability",
+    "regulatory-pressure": "q-regulatory-pressure",
+    "technological-change": "q-technological-change",
+    "logistics-handling": "q-logistics-handling",
+    "value-recovery": "q-value-recovery",
+    "embedded-value": "q-embedded-value",
+  };
   
   for (const criterionId of criteriaIds) {
     let suggestedValue: number | null = null;
@@ -798,17 +810,6 @@ export function analyzeProductDescriptionRStrategy(
       confidence = "low";
       alternativeValues.push(2, 4);
     }
-    
-    // Map criterionId to question ID
-    const questionIdMap: Record<string, string> = {
-      "durability": "rs-durability",
-      "upgradability": "rs-upgradability",
-      "market-demand": "rs-market",
-      "collection-infra": "rs-collection",
-      "reverse-logistics": "rs-logistics",
-      "labor-expertise": "rs-labor",
-      "regulations": "rs-regulations",
-    };
     
     suggestions.push({
       questionId: questionIdMap[criterionId],
