@@ -1,13 +1,31 @@
-import { Product, Answer } from "./types";
+import { Product, Answer, AssessmentMode } from "./types";
+import { CriterionAnswer } from "./r-strategy/types";
 
 /**
  * Encode product data into a compact base64 string for URL sharing
+ * Supports both HBR and R-strategy assessment modes
  */
 export function encodeProductForURL(product: Product): string {
-  const data = {
-    n: product.name,
-    a: product.answers.map((ans) => `${ans.questionId}:${ans.value}`).join(","),
-  };
+  const mode = product.assessmentMode || 'hbr';
+  
+  let data: Record<string, unknown>;
+  
+  if (mode === 'r-strategy' && product.rStrategyAnswers) {
+    // R-strategy encoding
+    data = {
+      n: product.name,
+      m: mode,
+      r: product.rStrategyAnswers.map((ans) => `${ans.criterionId}:${ans.value}`).join(","),
+    };
+  } else {
+    // HBR encoding (default for backward compatibility)
+    data = {
+      n: product.name,
+      m: mode,
+      a: product.answers?.map((ans) => `${ans.questionId}:${ans.value}`).join(","),
+    };
+  }
+  
   const json = JSON.stringify(data);
   // Use base64url encoding (URL-safe)
   return btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -15,8 +33,14 @@ export function encodeProductForURL(product: Product): string {
 
 /**
  * Decode product data from a base64 URL string
+ * Supports both HBR and R-strategy assessment modes
  */
-export function decodeProductFromURL(encoded: string): { name: string; answers: Answer[] } | null {
+export function decodeProductFromURL(encoded: string): { 
+  name: string; 
+  assessmentMode: AssessmentMode;
+  answers?: Answer[];
+  rStrategyAnswers?: CriterionAnswer[];
+} | null {
   try {
     // Restore base64 padding and convert from base64url
     const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
@@ -26,16 +50,37 @@ export function decodeProductFromURL(encoded: string): { name: string; answers: 
     const json = atob(padded);
     const data = JSON.parse(json);
     
-    // Parse answers from compressed format
-    const answers: Answer[] = data.a.split(",").map((s: string) => {
-      const [questionId, value] = s.split(":");
-      return { questionId, value: parseInt(value, 10) };
-    });
+    const mode: AssessmentMode = data.m || 'hbr';
     
-    return {
-      name: data.n,
-      answers,
-    };
+    if (mode === 'r-strategy' && data.r) {
+      // Parse R-strategy answers
+      const rStrategyAnswers: CriterionAnswer[] = data.r.split(",").map((s: string) => {
+        const [criterionId, value] = s.split(":");
+        return { 
+          criterionId, 
+          value: parseInt(value, 10),
+          normalizedScore: parseInt(value, 10) * 20, // Rough conversion
+        };
+      });
+      
+      return {
+        name: data.n,
+        assessmentMode: mode,
+        rStrategyAnswers,
+      };
+    } else {
+      // Parse HBR answers (default for backward compatibility)
+      const answers: Answer[] = data.a ? data.a.split(",").map((s: string) => {
+        const [questionId, value] = s.split(":");
+        return { questionId, value: parseInt(value, 10) };
+      }) : [];
+      
+      return {
+        name: data.n,
+        assessmentMode: mode,
+        answers,
+      };
+    }
   } catch {
     return null;
   }

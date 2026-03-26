@@ -2,16 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Answer, AssessmentResult, Product } from "../../lib/types";
+import { Answer, AssessmentResult, Product, AssessmentMode } from "../../lib/types";
+import { CriterionAnswer, RStrategyResult } from "@/lib/r-strategy/types";
 import { usePortfolio } from "../../lib/portfolio-context";
 import { decodeProductFromURL } from "../../lib/share-utils";
 import { assess } from "../../lib/scoring";
+import { assessRStrategy, convertAnswers } from "@/lib/r-strategy/scoring";
 import QuestionnaireWizard from "../../components/QuestionnaireWizard";
 import ResultsCard from "../../components/ResultsCard";
 import CircularityMatrix from "../../components/CircularityMatrix";
 import Link from "next/link";
 
 type ViewState = "wizard" | "results";
+
+// Union type for completion data
+ type CompletionData = 
+  | { mode: 'hbr'; answers: Answer[]; result: AssessmentResult }
+  | { mode: 'r-strategy'; answers: CriterionAnswer[]; result: RStrategyResult };
 
 export default function AssessPageContent() {
   const searchParams = useSearchParams();
@@ -21,7 +28,12 @@ export default function AssessPageContent() {
   const [view, setView] = useState<ViewState>("wizard");
   const [lastProduct, setLastProduct] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [sharedProductData, setSharedProductData] = useState<{ name: string; answers: Answer[] } | null>(null);
+  const [sharedProductData, setSharedProductData] = useState<{ 
+    name: string; 
+    assessmentMode: AssessmentMode;
+    answers?: Answer[];
+    rStrategyAnswers?: CriterionAnswer[];
+  } | null>(null);
   const processedShare = useRef(false);
 
   // Handle edit mode from localStorage (set by portfolio page)
@@ -30,7 +42,7 @@ export default function AssessPageContent() {
       const editData = localStorage.getItem("circularity-matrix-edit-product");
       if (editData) {
         const parsed = JSON.parse(editData);
-        if (parsed.id && parsed.name && parsed.answers) {
+        if (parsed.id && parsed.name) {
           // Find the full product in portfolio
           const product = portfolio.products.find(p => p.id === parsed.id);
           if (product) {
@@ -51,16 +63,51 @@ export default function AssessPageContent() {
       processedShare.current = true;
       const decoded = decodeProductFromURL(shareParam);
       if (decoded) {
-        setSharedProductData(decoded);
-        // Auto-complete with shared data
-        const result = assess(decoded.answers);
-        const product: Product = {
-          id: crypto.randomUUID(),
+        // Determine mode from decoded data
+        const mode: AssessmentMode = decoded.assessmentMode || 'hbr';
+        setSharedProductData({
           name: decoded.name,
+          assessmentMode: mode,
           answers: decoded.answers,
-          result,
-          createdAt: Date.now(),
-        };
+          rStrategyAnswers: decoded.rStrategyAnswers,
+        });
+        
+        // Auto-complete with shared data
+        let product: Product;
+        
+        if (mode === 'hbr' && decoded.answers) {
+          const result = assess(decoded.answers);
+          product = {
+            id: crypto.randomUUID(),
+            name: decoded.name,
+            assessmentMode: 'hbr',
+            answers: decoded.answers,
+            result,
+            createdAt: Date.now(),
+          };
+        } else if (mode === 'r-strategy' && decoded.rStrategyAnswers) {
+          const result = assessRStrategy(decoded.rStrategyAnswers);
+          product = {
+            id: crypto.randomUUID(),
+            name: decoded.name,
+            assessmentMode: 'r-strategy',
+            rStrategyAnswers: decoded.rStrategyAnswers,
+            rStrategyResult: result,
+            createdAt: Date.now(),
+          };
+        } else {
+          // Fallback to HBR if data is incomplete
+          const result = assess(decoded.answers || []);
+          product = {
+            id: crypto.randomUUID(),
+            name: decoded.name,
+            assessmentMode: 'hbr',
+            answers: decoded.answers || [],
+            result,
+            createdAt: Date.now(),
+          };
+        }
+        
         addProduct(product);
         setLastProduct(product);
         setView("results");
@@ -70,29 +117,62 @@ export default function AssessPageContent() {
 
   function handleComplete(
     name: string,
-    answers: Answer[],
-    result: AssessmentResult
+    data: CompletionData
   ) {
     if (editingProduct) {
       // Update existing product
-      const updatedProduct: Product = {
-        ...editingProduct,
-        name,
-        answers,
-        result,
-        createdAt: Date.now(),
-      };
+      let updatedProduct: Product;
+      
+      if (data.mode === 'hbr') {
+        updatedProduct = {
+          ...editingProduct,
+          name,
+          assessmentMode: 'hbr',
+          answers: data.answers,
+          result: data.result,
+          rStrategyAnswers: undefined,
+          rStrategyResult: undefined,
+          createdAt: Date.now(),
+        };
+      } else {
+        updatedProduct = {
+          ...editingProduct,
+          name,
+          assessmentMode: 'r-strategy',
+          rStrategyAnswers: data.answers,
+          rStrategyResult: data.result,
+          answers: undefined,
+          result: undefined,
+          createdAt: Date.now(),
+        };
+      }
+      
       updateProduct(editingProduct.id, updatedProduct);
       setLastProduct(updatedProduct);
     } else {
       // Add new product
-      const product: Product = {
-        id: crypto.randomUUID(),
-        name,
-        answers,
-        result,
-        createdAt: Date.now(),
-      };
+      let product: Product;
+      
+      if (data.mode === 'hbr') {
+        product = {
+          id: crypto.randomUUID(),
+          name,
+          assessmentMode: 'hbr',
+          answers: data.answers,
+          result: data.result,
+          createdAt: Date.now(),
+        };
+      } else {
+        product = {
+          id: crypto.randomUUID(),
+          name,
+          assessmentMode: 'r-strategy',
+          rStrategyAnswers: data.answers,
+          rStrategyResult: data.result,
+          createdAt: Date.now(),
+        };
+      }
+      
       addProduct(product);
       setLastProduct(product);
     }
@@ -117,6 +197,25 @@ export default function AssessPageContent() {
   const isEditing = !!editingProduct;
   const isShared = !!sharedProductData;
 
+  // Prepare initial data for wizard
+  const getInitialMode = (): AssessmentMode => {
+    if (editingProduct) return editingProduct.assessmentMode;
+    if (sharedProductData) return sharedProductData.assessmentMode;
+    return 'r-strategy'; // Default to R-strategy for new products
+  };
+
+  const getInitialAnswers = (): Answer[] | undefined => {
+    if (editingProduct?.assessmentMode === 'hbr') return editingProduct.answers;
+    if (sharedProductData?.assessmentMode === 'hbr') return sharedProductData.answers;
+    return undefined;
+  };
+
+  const getInitialRStrategyAnswers = (): CriterionAnswer[] | undefined => {
+    if (editingProduct?.assessmentMode === 'r-strategy') return editingProduct.rStrategyAnswers;
+    if (sharedProductData?.assessmentMode === 'r-strategy') return sharedProductData.rStrategyAnswers;
+    return undefined;
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {view === "wizard" ? (
@@ -130,7 +229,7 @@ export default function AssessPageContent() {
                 ? `Updating "${editingProduct?.name}". Your previous answers are pre-filled.`
                 : isShared
                 ? "This is a shared product assessment. You can add it to your portfolio."
-                : "Answer 8 questions to identify the right circular strategy for your product."}
+                : "Choose a framework and answer questions to identify the right circular strategy for your product."}
               {portfolio.products.length > 0 && !isEditing && !isShared && (
                 <span className="text-blue-600 ml-1">
                   ({portfolio.products.length} product
@@ -141,8 +240,10 @@ export default function AssessPageContent() {
           </div>
           <QuestionnaireWizard
             onComplete={handleComplete}
-            initialProductName={editingProduct?.name || ""}
-            initialAnswers={editingProduct?.answers}
+            initialProductName={editingProduct?.name || sharedProductData?.name || ""}
+            initialMode={getInitialMode()}
+            initialAnswers={getInitialAnswers()}
+            initialRStrategyAnswers={getInitialRStrategyAnswers()}
             editingProductId={editingProduct?.id}
           />
           {isEditing && (
@@ -173,22 +274,47 @@ export default function AssessPageContent() {
             <div>
               <ResultsCard
                 productName={lastProduct.name}
+                assessmentMode={lastProduct.assessmentMode}
                 result={lastProduct.result}
-                productId={lastProduct.id}
                 answers={lastProduct.answers}
+                rStrategyResult={lastProduct.rStrategyResult}
+                rStrategyAnswers={lastProduct.rStrategyAnswers}
+                productId={lastProduct.id}
               />
             </div>
 
-            {/* Matrix */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Position on the Circularity Matrix
-              </h3>
-              <CircularityMatrix
-                products={portfolio.products}
-                highlightCellId={lastProduct.result.cell.id}
-              />
-            </div>
+            {/* Matrix - only show for HBR mode */}
+            {lastProduct.assessmentMode === 'hbr' && lastProduct.result && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Position on the Circularity Matrix
+                </h3>
+                <CircularityMatrix
+                  products={portfolio.products.filter(p => p.assessmentMode === 'hbr' && p.result)}
+                  highlightCellId={lastProduct.result.cell.id}
+                />
+              </div>
+            )}
+            
+            {/* For R-strategy, show a placeholder or additional info */}
+            {lastProduct.assessmentMode === 'r-strategy' && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  R-Strategy Analysis
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <p className="text-gray-600 text-sm">
+                    This product was assessed using the R-Strategy Scorecard framework, 
+                    which evaluates 7 criteria across 5 R-strategies (Reuse, Refurbish, 
+                    Remanufacture, Repurpose, Recycle).
+                  </p>
+                  <p className="text-gray-600 text-sm mt-3">
+                    View the detailed results in the scorecard and scatter plot visualizations 
+                    on the left.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Actions */}

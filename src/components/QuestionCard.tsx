@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Question } from "../lib/types";
+import { Question as HBRQuestion } from "../lib/types";
+import { RStrategyQuestion } from "../lib/r-strategy/types";
+
+type Question = HBRQuestion | RStrategyQuestion;
 
 interface QuestionCardProps {
   question: Question;
@@ -16,7 +19,11 @@ export default function QuestionCard({
 }: QuestionCardProps) {
   const [showExamples, setShowExamples] = useState(false);
 
-  // Dimension-specific example products
+  // Determine if this is HBR or R-strategy question
+  const isHBRQuestion = 'dimension' in question;
+  const isRStrategyQuestion = 'category' in question;
+
+  // Dimension-specific example products (for HBR)
   const dimensionExamples: Record<string, string[]> = {
     access: [
       "Industrial printing press (direct service contract)",
@@ -41,7 +48,31 @@ export default function QuestionCard({
     ],
   };
 
-  const examples = dimensionExamples[question.dimension] || [];
+  // Category-specific examples (for R-strategy)
+  const categoryExamples: Record<string, string[]> = {
+    suitability: [
+      "Low-value disposable packaging",
+      "Fast fashion clothing",
+      "Standard consumer electronics",
+      "Industrial machinery",
+      "High-value medical equipment",
+    ],
+    practicality: [
+      "Single-material aluminum cans",
+      "Modular office furniture",
+      "Standard appliances",
+      "Complex electronics",
+      "Bonded composite materials",
+    ],
+  };
+
+  const examples = isHBRQuestion 
+    ? dimensionExamples[(question as HBRQuestion).dimension] || []
+    : isRStrategyQuestion
+      ? categoryExamples[(question as RStrategyQuestion).category] || []
+      : [];
+
+  const accentColor = isRStrategyQuestion ? "emerald" : "blue";
 
   return (
     <div>
@@ -51,30 +82,32 @@ export default function QuestionCard({
       <p className="text-sm text-gray-500 mb-4">{question.helpText}</p>
 
       {/* Examples toggle */}
-      <button
-        onClick={() => setShowExamples(!showExamples)}
-        className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-4 transition-colors"
-      >
-        <svg
-          className={`w-4 h-4 transition-transform ${showExamples ? "rotate-90" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      {examples.length > 0 && (
+        <button
+          onClick={() => setShowExamples(!showExamples)}
+          className={`flex items-center gap-1 text-sm text-${accentColor}-600 hover:text-${accentColor}-800 mb-4 transition-colors`}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-        {showExamples ? "Hide examples" : "See examples for each option"}
-      </button>
+          <svg
+            className={`w-4 h-4 transition-transform ${showExamples ? "rotate-90" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          {showExamples ? "Hide examples" : "See examples for each option"}
+        </button>
+      )}
 
-      {showExamples && (
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
-          <p className="text-xs text-blue-700 mb-2 font-medium">
+      {showExamples && examples.length > 0 && (
+        <div className={`bg-${accentColor}-50 border border-${accentColor}-100 rounded-lg p-3 mb-4`}>
+          <p className={`text-xs text-${accentColor}-700 mb-2 font-medium`}>
             Example products at each level:
           </p>
           <ul className="space-y-1">
             {examples.map((example, idx) => (
-              <li key={idx} className="text-xs text-blue-800 flex items-start gap-2">
-                <span className="font-semibold text-blue-600 min-w-[1rem]">{idx + 1}.</span>
+              <li key={idx} className={`text-xs text-${accentColor}-800 flex items-start gap-2`}>
+                <span className={`font-semibold text-${accentColor}-600 min-w-[1rem]`}>{idx + 1}.</span>
                 <span>{example}</span>
               </li>
             ))}
@@ -91,7 +124,7 @@ export default function QuestionCard({
               onClick={() => onSelect(option.value)}
               className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                 isSelected
-                  ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                  ? `border-${accentColor}-500 bg-${accentColor}-50 ring-1 ring-${accentColor}-500`
                   : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >

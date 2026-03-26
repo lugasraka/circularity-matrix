@@ -2,38 +2,98 @@
 
 import { useState, useMemo } from "react";
 import { productPresets, getPresetCategories, searchPresets, ProductPreset } from "../lib/presets";
+import { rStrategyPresets, getPresetCategories as getRStrategyPresetCategories, searchPresets as searchRStrategyPresets, RStrategyPreset } from "../lib/r-strategy/presets";
 
 interface PresetSelectorProps {
   onSelectPreset: (preset: ProductPreset) => void;
+  onSelectRStrategyPreset?: (preset: RStrategyPreset) => void;
   onSkip: () => void;
 }
 
-export default function PresetSelector({ onSelectPreset, onSkip }: PresetSelectorProps) {
+export default function PresetSelector({ 
+  onSelectPreset, 
+  onSelectRStrategyPreset,
+  onSkip 
+}: PresetSelectorProps) {
+  const [activeTab, setActiveTab] = useState<"hbr" | "r-strategy">("r-strategy");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const categories = useMemo(() => getPresetCategories(), []);
+  const isRStrategy = activeTab === "r-strategy";
 
+  // Get categories based on active tab
+  const categories = useMemo(() => {
+    if (isRStrategy) {
+      return getRStrategyPresetCategories();
+    }
+    return getPresetCategories();
+  }, [isRStrategy]);
+
+  // Get filtered presets based on active tab
   const filteredPresets = useMemo(() => {
-    if (searchQuery) {
-      return searchPresets(searchQuery);
+    if (isRStrategy) {
+      if (searchQuery) {
+        return searchRStrategyPresets(searchQuery);
+      }
+      if (selectedCategory) {
+        return rStrategyPresets.filter((p) => p.category === selectedCategory);
+      }
+      return rStrategyPresets;
+    } else {
+      if (searchQuery) {
+        return searchPresets(searchQuery);
+      }
+      if (selectedCategory) {
+        return productPresets.filter((p) => p.category === selectedCategory);
+      }
+      return productPresets;
     }
-    if (selectedCategory) {
-      return productPresets.filter((p) => p.category === selectedCategory);
-    }
-    return productPresets;
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, isRStrategy]);
 
-  const groupedPresets = useMemo(() => {
+  // Group presets by category
+  const groupedHBRPresets = useMemo(() => {
     const groups: Record<string, ProductPreset[]> = {};
-    filteredPresets.forEach((preset) => {
+    const presetsToGroup = searchQuery 
+      ? searchPresets(searchQuery) 
+      : selectedCategory 
+        ? productPresets.filter((p) => p.category === selectedCategory)
+        : productPresets;
+    
+    presetsToGroup.forEach((preset) => {
       if (!groups[preset.category]) {
         groups[preset.category] = [];
       }
       groups[preset.category].push(preset);
     });
     return groups;
-  }, [filteredPresets]);
+  }, [searchQuery, selectedCategory]);
+
+  const groupedRStrategyPresets = useMemo(() => {
+    const groups: Record<string, RStrategyPreset[]> = {};
+    const presetsToGroup = searchQuery 
+      ? searchRStrategyPresets(searchQuery) 
+      : selectedCategory 
+        ? rStrategyPresets.filter((p) => p.category === selectedCategory)
+        : rStrategyPresets;
+    
+    presetsToGroup.forEach((preset) => {
+      if (!groups[preset.category]) {
+        groups[preset.category] = [];
+      }
+      groups[preset.category].push(preset);
+    });
+    return groups;
+  }, [searchQuery, selectedCategory]);
+
+  const groupedPresets = isRStrategy ? groupedRStrategyPresets : groupedHBRPresets;
+
+  const handleSelectPreset = (preset: ProductPreset | RStrategyPreset) => {
+    if (isRStrategy && onSelectRStrategyPreset) {
+      onSelectRStrategyPreset(preset as RStrategyPreset);
+    } else {
+      onSelectPreset(preset as ProductPreset);
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -44,6 +104,40 @@ export default function PresetSelector({ onSelectPreset, onSkip }: PresetSelecto
         <p className="text-sm text-gray-600">
           Select a product category to pre-fill typical characteristics. You can customize all answers afterward.
         </p>
+      </div>
+
+      {/* Framework tabs */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => {
+            setActiveTab("r-strategy");
+            setSelectedCategory(null);
+            setSearchQuery("");
+          }}
+          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === "r-strategy"
+              ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          R-Strategy Scorecard
+          <span className="block text-xs font-normal opacity-75">{rStrategyPresets.length} templates</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("hbr");
+            setSelectedCategory(null);
+            setSearchQuery("");
+          }}
+          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === "hbr"
+              ? "bg-blue-100 text-blue-700 border border-blue-300"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          HBR Matrix
+          <span className="block text-xs font-normal opacity-75">{productPresets.length} templates</span>
+        </button>
       </div>
 
       {/* Search */}
@@ -82,7 +176,9 @@ export default function PresetSelector({ onSelectPreset, onSkip }: PresetSelecto
             onClick={() => setSelectedCategory(null)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               selectedCategory === null
-                ? "bg-blue-600 text-white"
+                ? activeTab === "r-strategy" 
+                  ? "bg-emerald-600 text-white"
+                  : "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
@@ -94,7 +190,9 @@ export default function PresetSelector({ onSelectPreset, onSkip }: PresetSelecto
               onClick={() => setSelectedCategory(cat)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === cat
-                  ? "bg-blue-600 text-white"
+                  ? activeTab === "r-strategy"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -114,13 +212,19 @@ export default function PresetSelector({ onSelectPreset, onSkip }: PresetSelecto
               </h4>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {presets.map((preset) => (
+              {(presets as (ProductPreset | RStrategyPreset)[]).map((preset) => (
                 <button
                   key={preset.id}
-                  onClick={() => onSelectPreset(preset)}
-                  className="text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                  onClick={() => handleSelectPreset(preset)}
+                  className={`text-left p-3 rounded-lg border transition-all group ${
+                    activeTab === "r-strategy"
+                      ? "hover:border-emerald-300 hover:bg-emerald-50"
+                      : "hover:border-blue-300 hover:bg-blue-50"
+                  }`}
                 >
-                  <div className="font-medium text-gray-900 group-hover:text-blue-700">
+                  <div className={`font-medium text-gray-900 ${
+                    activeTab === "r-strategy" ? "group-hover:text-emerald-700" : "group-hover:text-blue-700"
+                  }`}>
                     {preset.name}
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
@@ -136,6 +240,11 @@ export default function PresetSelector({ onSelectPreset, onSkip }: PresetSelecto
                       </span>
                     ))}
                   </div>
+                  {isRStrategy && (
+                    <div className="mt-2 text-[10px] text-emerald-600 font-medium">
+                      Expected: {(preset as RStrategyPreset).expectedPrimary}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

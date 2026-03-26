@@ -46,11 +46,16 @@ export function generateReport(portfolio: Portfolio) {
     79
   );
 
+  // Filter HBR products for report (R-strategy products not yet supported in PDF)
+  const hbrProducts = portfolio.products.filter(p => p.assessmentMode === 'hbr' && p.result);
+  
   // Strategy distribution summary
   const strategyCount: Record<string, number> = {};
-  for (const p of portfolio.products) {
-    const key = p.result.cell.strategies.join(" + ");
-    strategyCount[key] = (strategyCount[key] || 0) + 1;
+  for (const p of hbrProducts) {
+    if (p.result) {
+      const key = p.result.cell.strategies.join(" + ");
+      strategyCount[key] = (strategyCount[key] || 0) + 1;
+    }
   }
 
   let y = 95;
@@ -65,7 +70,7 @@ export function generateReport(portfolio: Portfolio) {
   for (const [strategy, count] of Object.entries(strategyCount).sort(
     ([, a], [, b]) => b - a
   )) {
-    const pct = ((count / portfolio.products.length) * 100).toFixed(0);
+    const pct = hbrProducts.length > 0 ? ((count / hbrProducts.length) * 100).toFixed(0) : "0";
     doc.setTextColor(60, 60, 60);
     doc.text(`${strategy}`, margin + 5, y);
     doc.text(
@@ -75,7 +80,7 @@ export function generateReport(portfolio: Portfolio) {
     );
 
     // Simple bar
-    const barWidth = (count / portfolio.products.length) * 60;
+    const barWidth = hbrProducts.length > 0 ? (count / hbrProducts.length) * 60 : 0;
     doc.setFillColor(37, 99, 235);
     doc.rect(margin + 120, y - 3, barWidth, 4, "F");
 
@@ -91,7 +96,8 @@ export function generateReport(portfolio: Portfolio) {
   y += 8;
 
   doc.setFontSize(9);
-  for (const [i, product] of portfolio.products.entries()) {
+  for (const [i, product] of hbrProducts.entries()) {
+    if (!product.result) continue;
     if (y > 270) {
       doc.addPage();
       y = 30;
@@ -116,12 +122,14 @@ export function generateReport(portfolio: Portfolio) {
   doc.setTextColor(0, 0, 0);
   doc.text("Circularity Matrix", margin, 25);
 
-  drawMatrixOnPdf(doc, portfolio.products, margin, 35, contentWidth);
+  drawMatrixOnPdf(doc, hbrProducts, margin, 35, contentWidth);
 
   // === PAGES 3+: Per-Product Detail ===
-  for (const product of portfolio.products) {
-    doc.addPage();
-    drawProductDetail(doc, product, margin, contentWidth);
+  for (const product of hbrProducts) {
+    if (product.result) {
+      doc.addPage();
+      drawProductDetail(doc, product, margin, contentWidth);
+    }
   }
 
   // === Download ===
@@ -210,7 +218,7 @@ function drawMatrixOnPdf(
     doc.text(labelLines, cx + 3, cy + 15);
 
     // Product pins
-    const cellProducts = products.filter((p) => p.result.cell.id === cell.id);
+    const cellProducts = products.filter((p) => p.result?.cell.id === cell.id);
     for (const [idx, product] of cellProducts.entries()) {
       const pinX = cx + cellW - 8 - (idx % 4) * 10;
       const pinY = cy + cellH - 8 - Math.floor(idx / 4) * 10;
@@ -263,6 +271,18 @@ function drawProductDetail(
   margin: number,
   contentWidth: number
 ) {
+  // Guard: only draw for HBR products with results
+  if (!product.result) {
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text(product.name, margin, 25);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("R-Strategy product details not available in PDF report.", margin, 40);
+    return;
+  }
+
   let y = 25;
 
   doc.setFontSize(16);

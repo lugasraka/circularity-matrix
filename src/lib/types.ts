@@ -1,3 +1,5 @@
+import { RStrategyResult } from "./r-strategy/types";
+
 export type StrategyType = "RPO" | "PLE" | "DFR";
 
 export type EmbeddedValue = "high" | "low";
@@ -7,6 +9,8 @@ export type AccessLevel = "easy" | "hard";
 export type ProcessLevel = "easy" | "hard";
 
 export type Dimension = "access" | "process" | "embeddedValue";
+
+export type AssessmentMode = "hbr" | "r-strategy";
 
 export interface MatrixPosition {
   access: AccessLevel;
@@ -56,11 +60,17 @@ export interface AssessmentResult {
   whatIfCell: CellStrategy; // Same quadrant, flipped embedded value
 }
 
+// Extended Product type supporting both assessment modes
 export interface Product {
   id: string;
   name: string;
-  answers: Answer[];
-  result: AssessmentResult;
+  assessmentMode: AssessmentMode;
+  // HBR mode data
+  answers?: Answer[];
+  result?: AssessmentResult;
+  // R-strategy mode data
+  rStrategyAnswers?: { criterionId: string; value: number; normalizedScore: number }[];
+  rStrategyResult?: RStrategyResult;
   createdAt: number;
 }
 

@@ -66,12 +66,14 @@ export default function CircularityMatrix({
     return { x, y };
   }
 
-  // Group products by cell
+  // Group products by cell (only HBR products with results)
   const productsByCell: Record<string, Product[]> = {};
   for (const p of products) {
-    const cellId = p.result.cell.id;
-    if (!productsByCell[cellId]) productsByCell[cellId] = [];
-    productsByCell[cellId].push(p);
+    if (p.assessmentMode === 'hbr' && p.result) {
+      const cellId = p.result.cell.id;
+      if (!productsByCell[cellId]) productsByCell[cellId] = [];
+      productsByCell[cellId].push(p);
+    }
   }
 
   const fontSize = compact ? 9 : 11;
@@ -285,7 +287,7 @@ export default function CircularityMatrix({
       </svg>
 
       {/* Tooltip */}
-      {hoveredProduct && !compact && (
+      {hoveredProduct && hoveredProduct.assessmentMode === 'hbr' && hoveredProduct.result && !compact && (
         <div
           className="fixed z-50 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 pointer-events-none shadow-lg"
           style={{

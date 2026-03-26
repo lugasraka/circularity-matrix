@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Product, StrategyType } from "../lib/types";
+import { RStrategy } from "@/lib/r-strategy/types";
 
 interface ProductListProps {
   products: Product[];
@@ -18,6 +19,14 @@ const STRATEGY_COLORS: Record<StrategyType, string> = {
   RPO: "bg-purple-100 text-purple-800",
   PLE: "bg-green-100 text-green-800",
   DFR: "bg-blue-100 text-blue-800",
+};
+
+const RSTRATEGY_COLORS: Record<RStrategy, string> = {
+  REUSE: "bg-emerald-100 text-emerald-800",
+  REFURBISH: "bg-blue-100 text-blue-800",
+  REMANUFACTURE: "bg-violet-100 text-violet-800",
+  REPURPOSE: "bg-amber-100 text-amber-800",
+  RECYCLE: "bg-gray-100 text-gray-800",
 };
 
 export const PIN_COLORS = [
@@ -41,6 +50,7 @@ export default function ProductList({
   showFilters = true,
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [modeFilter, setModeFilter] = useState<"all" | "hbr" | "r-strategy">("all");
   const [strategyFilter, setStrategyFilter] = useState<string[]>([]);
   const [dimensionFilter, setDimensionFilter] = useState<{
     access?: "easy" | "hard";
@@ -48,51 +58,80 @@ export default function ProductList({
     embeddedValue?: "high" | "low";
   }>({});
 
+  // Separate HBR and R-strategy products
+  const hbrProducts = useMemo(() => 
+    products.filter(p => p.assessmentMode === 'hbr' && p.result),
+  [products]);
+  
+  const rStrategyProducts = useMemo(() => 
+    products.filter(p => p.assessmentMode === 'r-strategy' && p.rStrategyResult),
+  [products]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      // Mode filter
+      if (modeFilter !== "all" && product.assessmentMode !== modeFilter) {
+        return false;
+      }
+
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesName = product.name.toLowerCase().includes(query);
-        const matchesStrategy = product.result.cell.strategies.some((s) =>
-          s.toLowerCase().includes(query)
-        );
+        
+        let matchesStrategy = false;
+        if (product.assessmentMode === 'hbr' && product.result) {
+          matchesStrategy = product.result.cell.strategies.some((s) =>
+            s.toLowerCase().includes(query)
+          );
+        } else if (product.assessmentMode === 'r-strategy' && product.rStrategyResult) {
+          matchesStrategy = product.rStrategyResult.primaryRecommendation.toLowerCase().includes(query);
+        }
+        
         if (!matchesName && !matchesStrategy) return false;
       }
 
-      // Strategy filter
-      if (strategyFilter.length > 0) {
-        const productStrategies = product.result.cell.strategies.join("+");
-        if (!strategyFilter.includes(productStrategies)) return false;
-      }
+      // HBR-specific filters
+      if (product.assessmentMode === 'hbr' && product.result) {
+        // Strategy filter
+        if (strategyFilter.length > 0) {
+          const productStrategies = product.result.cell.strategies.join("+");
+          if (!strategyFilter.includes(productStrategies)) return false;
+        }
 
-      // Dimension filter
-      if (dimensionFilter.access && product.result.position.access !== dimensionFilter.access) {
-        return false;
-      }
-      if (dimensionFilter.process && product.result.position.process !== dimensionFilter.process) {
-        return false;
-      }
-      if (dimensionFilter.embeddedValue && product.result.position.embeddedValue !== dimensionFilter.embeddedValue) {
-        return false;
+        // Dimension filter
+        if (dimensionFilter.access && product.result.position.access !== dimensionFilter.access) {
+          return false;
+        }
+        if (dimensionFilter.process && product.result.position.process !== dimensionFilter.process) {
+          return false;
+        }
+        if (dimensionFilter.embeddedValue && product.result.position.embeddedValue !== dimensionFilter.embeddedValue) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [products, searchQuery, strategyFilter, dimensionFilter]);
+  }, [products, searchQuery, modeFilter, strategyFilter, dimensionFilter]);
 
-  // Get unique strategy combinations for filter
+  // Get unique strategy combinations for filter (HBR only)
   const strategyOptions = useMemo(() => {
     const strategies = new Set<string>();
-    products.forEach((p) => strategies.add(p.result.cell.strategies.join("+")));
+    hbrProducts.forEach((p) => {
+      if (p.result) {
+        strategies.add(p.result.cell.strategies.join("+"));
+      }
+    });
     return Array.from(strategies).sort();
-  }, [products]);
+  }, [hbrProducts]);
 
   const hasActiveFilters = searchQuery || strategyFilter.length > 0 || 
-    Object.keys(dimensionFilter).length > 0;
+    Object.keys(dimensionFilter).length > 0 || modeFilter !== "all";
 
   const clearFilters = () => {
     setSearchQuery("");
+    setModeFilter("all");
     setStrategyFilter([]);
     setDimensionFilter({});
   };
@@ -108,6 +147,29 @@ export default function ProductList({
 
   return (
     <div className="space-y-3">
+      {/* Mode filter */}
+      {hbrProducts.length > 0 && rStrategyProducts.length > 0 && (
+        <div className="flex gap-2">
+          {[
+            { id: "all" as const, label: "All", count: products.length },
+            { id: "hbr" as const, label: "HBR", count: hbrProducts.length },
+            { id: "r-strategy" as const, label: "R-Strategy", count: rStrategyProducts.length },
+          ].map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setModeFilter(m.id)}
+              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors ${
+                modeFilter === m.id
+                  ? "bg-blue-100 text-blue-700 border border-blue-300"
+                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+              }`}
+            >
+              {m.label} ({m.count})
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Search */}
       {showSearch && (
         <div className="relative">
@@ -139,8 +201,8 @@ export default function ProductList({
         </div>
       )}
 
-      {/* Filters */}
-      {showFilters && strategyOptions.length > 1 && (
+      {/* HBR Strategy filters */}
+      {showFilters && strategyOptions.length > 1 && modeFilter !== "r-strategy" && (
         <div className="flex flex-wrap gap-2">
           {strategyOptions.map((strategy) => (
             <button
@@ -164,8 +226,8 @@ export default function ProductList({
         </div>
       )}
 
-      {/* Dimension filters */}
-      {showFilters && products.length > 3 && (
+      {/* HBR Dimension filters */}
+      {showFilters && hbrProducts.length > 3 && modeFilter !== "r-strategy" && (
         <div className="flex flex-wrap gap-2 text-xs">
           <select
             value={dimensionFilter.access || ""}
@@ -256,19 +318,48 @@ export default function ProductList({
                   {product.name}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                  {product.result.cell.strategies.map((s) => (
-                    <span
-                      key={s}
-                      className={`inline-block px-1.5 py-0 rounded text-[10px] font-semibold ${STRATEGY_COLORS[s]}`}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                  <span className="text-[10px] text-gray-400 ml-1">
-                    {product.result.position.access === "hard" ? "H" : "E"}/
-                    {product.result.position.process === "hard" ? "H" : "E"}/
-                    {product.result.position.embeddedValue === "high" ? "H" : "L"}
+                  {/* Mode badge */}
+                  <span className={`text-[10px] px-1.5 py-0 rounded font-medium ${
+                    product.assessmentMode === 'hbr'
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}>
+                    {product.assessmentMode === 'hbr' ? 'HBR' : 'R'}
                   </span>
+
+                  {/* Strategy badges */}
+                  {product.assessmentMode === 'hbr' && product.result && (
+                    <>
+                      {product.result.cell.strategies.map((s) => (
+                        <span
+                          key={s}
+                          className={`inline-block px-1.5 py-0 rounded text-[10px] font-semibold ${STRATEGY_COLORS[s]}`}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                      <span className="text-[10px] text-gray-400 ml-1">
+                        {product.result.position.access === "hard" ? "H" : "E"}/
+                        {product.result.position.process === "hard" ? "H" : "E"}/
+                        {product.result.position.embeddedValue === "high" ? "H" : "L"}
+                      </span>
+                    </>
+                  )}
+
+                  {product.assessmentMode === 'r-strategy' && product.rStrategyResult && (
+                    <>
+                      <span
+                        className={`inline-block px-1.5 py-0 rounded text-[10px] font-semibold ${
+                          RSTRATEGY_COLORS[product.rStrategyResult.primaryRecommendation]
+                        }`}
+                      >
+                        {product.rStrategyResult.primaryRecommendation}
+                      </span>
+                      <span className="text-[10px] text-gray-400 ml-1">
+                        S:{product.rStrategyResult.scores[0]?.suitabilityScore}% P:{product.rStrategyResult.scores[0]?.practicalityScore}%
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 

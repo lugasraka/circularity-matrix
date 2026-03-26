@@ -25,11 +25,26 @@ export default function PortfolioPage() {
 
   const products = portfolio.products;
 
-  // Strategy distribution
+  // Filter products by assessment mode
+  const hbrProducts = products.filter(p => p.assessmentMode === 'hbr' && p.result);
+  const rStrategyProducts = products.filter(p => p.assessmentMode === 'r-strategy' && p.rStrategyResult);
+
+  // Strategy distribution (only for HBR products)
   const strategyCount: Record<string, number> = {};
-  for (const p of products) {
-    const key = p.result.cell.strategies.join(" + ");
-    strategyCount[key] = (strategyCount[key] || 0) + 1;
+  for (const p of hbrProducts) {
+    if (p.result) {
+      const key = p.result.cell.strategies.join(" + ");
+      strategyCount[key] = (strategyCount[key] || 0) + 1;
+    }
+  }
+
+  // R-Strategy distribution
+  const rStrategyCount: Record<string, number> = {};
+  for (const p of rStrategyProducts) {
+    if (p.rStrategyResult) {
+      const key = p.rStrategyResult.primaryRecommendation;
+      rStrategyCount[key] = (rStrategyCount[key] || 0) + 1;
+    }
   }
 
   // Handle edit - navigate to assess page with product data
@@ -39,7 +54,7 @@ export default function PortfolioPage() {
       localStorage.setItem("circularity-matrix-edit-product", JSON.stringify({
         id: product.id,
         name: product.name,
-        answers: product.answers,
+        assessmentMode: product.assessmentMode,
       }));
     } catch {
       // Ignore storage errors
@@ -50,7 +65,7 @@ export default function PortfolioPage() {
   // Export portfolio as JSON
   const exportJSON = () => {
     const data = {
-      version: "1.0",
+      version: "1.1",
       exportedAt: new Date().toISOString(),
       portfolio,
     };
@@ -68,33 +83,69 @@ export default function PortfolioPage() {
     setShowExportMenu(false);
   };
 
-  // Export as CSV
+  // Export as CSV (includes both HBR and R-strategy products)
   const exportCSV = () => {
     const headers = [
       "Product Name",
+      "Assessment Mode",
       "Created At",
+      // HBR columns
       "Access Score",
       "Process Score",
       "Embedded Value Score",
       "Access Level",
       "Process Level",
       "Embedded Value Level",
-      "Recommended Strategies",
+      "HBR Strategies",
       "Cell ID",
+      // R-Strategy columns
+      "Primary R-Strategy",
+      "Suitability Score",
+      "Practicality Score",
+      "Overall Score",
+      "R-Strategy Rank",
     ];
 
-    const rows = products.map((p) => [
-      `"${p.name.replace(/"/g, '""')}"`,
-      new Date(p.createdAt).toISOString(),
-      p.result.scores.access.toFixed(3),
-      p.result.scores.process.toFixed(3),
-      p.result.scores.embeddedValue.toFixed(3),
-      p.result.position.access,
-      p.result.position.process,
-      p.result.position.embeddedValue,
-      `"${p.result.cell.strategies.join(", ")}"`,
-      p.result.cell.id,
-    ]);
+    const rows = products.map((p) => {
+      const base = [
+        `"${p.name.replace(/"/g, '""')}"`,
+        p.assessmentMode,
+        new Date(p.createdAt).toISOString(),
+      ];
+      
+      if (p.assessmentMode === 'hbr' && p.result) {
+        return [
+          ...base,
+          p.result.scores.access.toFixed(3),
+          p.result.scores.process.toFixed(3),
+          p.result.scores.embeddedValue.toFixed(3),
+          p.result.position.access,
+          p.result.position.process,
+          p.result.position.embeddedValue,
+          `"${p.result.cell.strategies.join(", ")}"`,
+          p.result.cell.id,
+          // Empty R-strategy columns
+          "", "", "", "", "",
+        ];
+      } else if (p.assessmentMode === 'r-strategy' && p.rStrategyResult) {
+        const primaryScore = p.rStrategyResult.scores.find(
+          s => s.strategy === p.rStrategyResult?.primaryRecommendation
+        );
+        return [
+          ...base,
+          // Empty HBR columns
+          "", "", "", "", "", "", "", "",
+          // R-strategy columns
+          p.rStrategyResult.primaryRecommendation,
+          primaryScore?.suitabilityScore || "",
+          primaryScore?.practicalityScore || "",
+          primaryScore?.overallScore || "",
+          primaryScore?.rank || "",
+        ];
+      }
+      
+      return [...base, ...Array(14).fill("")];
+    });
 
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 
@@ -140,16 +191,16 @@ export default function PortfolioPage() {
     event.target.value = "";
   };
 
-  // Pin color legend
+  // Pin color legend (only HBR products have pins)
   const PinLegend = () => {
-    if (products.length === 0) return null;
+    if (hbrProducts.length === 0) return null;
     return (
       <div className="mt-4 bg-gray-50 rounded-lg p-3">
         <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-          Product Legend
+          Matrix Product Legend
         </h4>
         <div className="space-y-1 max-h-32 overflow-y-auto">
-          {products.map((p, idx) => {
+          {hbrProducts.map((p, idx) => {
             const colors = [
               "#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6",
               "#ec4899", "#06b6d4", "#f97316", "#6366f1", "#14b8a6",
@@ -177,6 +228,11 @@ export default function PortfolioPage() {
           <h1 className="text-2xl font-bold text-gray-900">Portfolio</h1>
           <p className="text-gray-500 mt-1">
             {products.length} product{products.length !== 1 ? "s" : ""} assessed
+            {hbrProducts.length > 0 && rStrategyProducts.length > 0 && (
+              <span className="text-gray-400">
+                {" "}({hbrProducts.length} HBR, {rStrategyProducts.length} R-Strategy)
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -298,17 +354,39 @@ export default function PortfolioPage() {
               selectedProductId={selectedProduct?.id}
             />
 
-            {/* Pin legend */}
-            <PinLegend />
+            {/* Pin legend (HBR only) */}
+            {hbrProducts.length > 0 && <PinLegend />}
 
-            {/* Strategy distribution */}
+            {/* HBR Strategy distribution */}
             {Object.keys(strategyCount).length > 0 && (
               <div className="mt-6 bg-gray-50 rounded-lg p-4">
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  Strategy Distribution
+                  HBR Strategy Distribution
                 </h4>
                 <div className="space-y-2">
                   {Object.entries(strategyCount)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([strategy, count]) => (
+                      <div key={strategy} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">{strategy}</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {count} ({((count / products.length) * 100).toFixed(0)}
+                          %)
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* R-Strategy distribution */}
+            {Object.keys(rStrategyCount).length > 0 && (
+              <div className="mt-6 bg-emerald-50 rounded-lg p-4">
+                <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-3">
+                  R-Strategy Distribution
+                </h4>
+                <div className="space-y-2">
+                  {Object.entries(rStrategyCount)
                     .sort(([, a], [, b]) => b - a)
                     .map(([strategy, count]) => (
                       <div key={strategy} className="flex items-center justify-between">
@@ -326,23 +404,46 @@ export default function PortfolioPage() {
 
           {/* Main: Matrix + Detail */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Circularity Matrix
-            </h3>
-            <CircularityMatrix
-              products={products}
-              highlightCellId={selectedProduct?.result.cell.id}
-              onProductClick={setSelectedProduct}
-            />
+            {/* Matrix (HBR only) */}
+            {hbrProducts.length > 0 && (
+              <>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  HBR Circularity Matrix
+                </h3>
+                <CircularityMatrix
+                  products={hbrProducts}
+                  highlightCellId={selectedProduct?.assessmentMode === 'hbr' ? selectedProduct.result?.cell.id : undefined}
+                  onProductClick={(p) => setSelectedProduct(p)}
+                />
+              </>
+            )}
+
+            {/* R-Strategy products info */}
+            {rStrategyProducts.length > 0 && (
+              <div className={`${hbrProducts.length > 0 ? 'mt-8' : ''}`}>
+                <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
+                  R-Strategy Products ({rStrategyProducts.length})
+                </h3>
+                <div className="bg-emerald-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">
+                    {rStrategyProducts.length} product{rStrategyProducts.length !== 1 ? 's' : ''} assessed using the R-Strategy Scorecard framework. 
+                    Select a product from the sidebar to view detailed results including the Suitability vs. Practicality scatter plot.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Selected product detail */}
             {selectedProduct && (
               <div className="mt-8 border-t pt-6">
                 <ResultsCard
                   productName={selectedProduct.name}
+                  assessmentMode={selectedProduct.assessmentMode}
                   result={selectedProduct.result}
-                  productId={selectedProduct.id}
                   answers={selectedProduct.answers}
+                  rStrategyResult={selectedProduct.rStrategyResult}
+                  rStrategyAnswers={selectedProduct.rStrategyAnswers}
+                  productId={selectedProduct.id}
                 />
               </div>
             )}

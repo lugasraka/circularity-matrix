@@ -1,17 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { AssessmentResult, CellStrategy, StrategyType } from "../lib/types";
+import { AssessmentResult, CellStrategy, StrategyType, AssessmentMode } from "../lib/types";
 import { strategyDescriptions } from "../lib/strategies";
 import { copyShareURL } from "../lib/share-utils";
+import { RStrategyResult } from "@/lib/r-strategy/types";
 import RoadmapPanel from "./RoadmapPanel";
 import FinancialCalculator from "./FinancialCalculator";
+import RStrategyScatterPlot from "./r-strategy/RStrategyScatterPlot";
+import RStrategyScorecard from "./r-strategy/RStrategyScorecard";
+import RStrategyRecommendation from "./r-strategy/RStrategyRecommendation";
 
 interface ResultsCardProps {
   productName: string;
-  result: AssessmentResult;
-  productId?: string;
+  assessmentMode: AssessmentMode;
+  // HBR mode data
+  result?: AssessmentResult;
   answers?: { questionId: string; value: number }[];
+  // R-strategy mode data
+  rStrategyResult?: RStrategyResult;
+  rStrategyAnswers?: { criterionId: string; value: number; normalizedScore: number }[];
+  // Common
+  productId?: string;
 }
 
 const STRATEGY_COLORS: Record<StrategyType, string> = {
@@ -86,17 +96,24 @@ function CellDetail({ cell, isWhatIf }: { cell: CellStrategy; isWhatIf: boolean 
   );
 }
 
-export default function ResultsCard({ productName, result, productId, answers }: ResultsCardProps) {
+// HBR Results Component
+function HBRResults({ 
+  result, 
+  productName, 
+  productId, 
+  answers 
+}: { 
+  result: AssessmentResult; 
+  productName: string;
+  productId?: string;
+  answers?: { questionId: string; value: number }[];
+}) {
   const [showWhatIf, setShowWhatIf] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [activeSection, setActiveSection] = useState<"main" | "roadmap" | "financial">("main");
 
   const { scores, position, cell, whatIfCell } = result;
-
-  // Strategy descriptions for all unique strategies
-  const allStrategies = Array.from(
-    new Set([...cell.strategies, ...whatIfCell.strategies])
-  );
+  const allStrategies = Array.from(new Set([...cell.strategies, ...whatIfCell.strategies]));
 
   const handleShare = async () => {
     if (!productId || !answers) return;
@@ -104,6 +121,7 @@ export default function ResultsCard({ productName, result, productId, answers }:
     const product = {
       id: productId,
       name: productName,
+      assessmentMode: 'hbr' as const,
       answers,
       result,
       createdAt: Date.now(),
@@ -122,10 +140,15 @@ export default function ResultsCard({ productName, result, productId, answers }:
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                HBR Matrix
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
               Results for &quot;{productName}&quot;
             </h2>
-            <p className="text-gray-500">
+            <p className="text-gray-500 mt-1">
               Your product maps to:{" "}
               <span className="font-medium text-gray-700">
                 {position.access === "hard" ? "Hard" : "Easy"} Access
@@ -144,7 +167,6 @@ export default function ResultsCard({ productName, result, productId, answers }:
             <button
               onClick={handleShare}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-              title="Copy shareable link"
             >
               {shareCopied ? (
                 <>
@@ -273,6 +295,160 @@ export default function ResultsCard({ productName, result, productId, answers }:
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// R-Strategy Results Component
+function RStrategyResults({ 
+  result, 
+  productName, 
+  productId, 
+  answers 
+}: { 
+  result: RStrategyResult; 
+  productName: string;
+  productId?: string;
+  answers?: { criterionId: string; value: number; normalizedScore: number }[];
+}) {
+  const [activeTab, setActiveTab] = useState<'visualization' | 'scorecard' | 'recommendation'>('visualization');
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShare = async () => {
+    if (!productId || !answers) return;
+    
+    // Note: copyShareURL needs to be updated to handle R-strategy products
+    // For now, we'll skip sharing functionality
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
+                R-Strategy Scorecard
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Results for &quot;{productName}&quot;
+            </h2>
+            <p className="text-gray-500 mt-1">
+              Primary recommendation:{" "}
+              <span className="font-semibold text-emerald-700">
+                {result.primaryRecommendation}
+              </span>
+              {result.isRecyclingFallback && (
+                <span className="ml-2 text-xs text-amber-600">
+                  (fallback recommendation)
+                </span>
+              )}
+            </p>
+          </div>
+          {productId && answers && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+            >
+              {shareCopied ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  Share
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-gray-200">
+        {[
+          { id: 'visualization' as const, label: '📊 Scatter Plot', color: 'emerald' },
+          { id: 'scorecard' as const, label: '📋 Scorecard', color: 'emerald' },
+          { id: 'recommendation' as const, label: '💡 Recommendation', color: 'emerald' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === tab.id
+                ? `border-${tab.color}-500 text-${tab.color}-700`
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="animate-in fade-in duration-200">
+        {activeTab === 'visualization' && (
+          <RStrategyScatterPlot result={result} />
+        )}
+
+        {activeTab === 'scorecard' && (
+          <RStrategyScorecard result={result} />
+        )}
+
+        {activeTab === 'recommendation' && (
+          <RStrategyRecommendation result={result} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Main ResultsCard component
+export default function ResultsCard({
+  productName,
+  assessmentMode,
+  result,
+  answers,
+  rStrategyResult,
+  rStrategyAnswers,
+  productId,
+}: ResultsCardProps) {
+  if (assessmentMode === 'hbr' && result) {
+    return (
+      <HBRResults 
+        result={result} 
+        productName={productName} 
+        productId={productId}
+        answers={answers}
+      />
+    );
+  }
+
+  if (assessmentMode === 'r-strategy' && rStrategyResult) {
+    return (
+      <RStrategyResults 
+        result={rStrategyResult} 
+        productName={productName}
+        productId={productId}
+        answers={rStrategyAnswers}
+      />
+    );
+  }
+
+  // Fallback for missing data
+  return (
+    <div className="p-6 text-center text-gray-500">
+      <p>Results data not available.</p>
     </div>
   );
 }
