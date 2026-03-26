@@ -77,3 +77,16 @@ export interface Product {
 export interface Portfolio {
   products: Product[];
 }
+
+// Type guard functions for safely checking product results
+export function hasHBRResult(product: Product): product is Product & { result: AssessmentResult } {
+  return product.assessmentMode === 'hbr' && product.result !== undefined;
+}
+
+export function hasRStrategyResult(product: Product): product is Product & { rStrategyResult: RStrategyResult } {
+  return product.assessmentMode === 'r-strategy' && product.rStrategyResult !== undefined;
+}
+
+export function hasResult(product: Product): boolean {
+  return hasHBRResult(product) || hasRStrategyResult(product);
+}

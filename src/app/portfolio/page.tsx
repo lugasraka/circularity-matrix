@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Product } from "../../lib/types";
+import { Product, hasHBRResult, hasRStrategyResult } from "../../lib/types";
 import { usePortfolio } from "../../lib/portfolio-context";
 import CircularityMatrix from "../../components/CircularityMatrix";
+import { RStrategyScatterPlot } from "../../components/r-strategy/RStrategyScatterPlot";
 import ProductList from "../../components/ProductList";
 import ResultsCard from "../../components/ResultsCard";
 import Link from "next/link";
@@ -22,17 +23,23 @@ export default function PortfolioPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [methodFilter, setMethodFilter] = useState<"all" | "hbr" | "r-strategy">("all");
 
   const products = portfolio.products;
 
   // Filter products by assessment mode
-  const hbrProducts = products.filter(p => p.assessmentMode === 'hbr' && p.result);
-  const rStrategyProducts = products.filter(p => p.assessmentMode === 'r-strategy' && p.rStrategyResult);
+  const filteredProducts = useMemo(() => {
+    if (methodFilter === "all") return products;
+    return products.filter(p => p.assessmentMode === methodFilter);
+  }, [products, methodFilter]);
+
+  const hbrProducts = products.filter(p => hasHBRResult(p));
+  const rStrategyProducts = products.filter(p => hasRStrategyResult(p));
 
   // Strategy distribution (only for HBR products)
   const strategyCount: Record<string, number> = {};
   for (const p of hbrProducts) {
-    if (p.result) {
+    if (hasHBRResult(p)) {
       const key = p.result.cell.strategies.join(" + ");
       strategyCount[key] = (strategyCount[key] || 0) + 1;
     }
@@ -41,7 +48,7 @@ export default function PortfolioPage() {
   // R-Strategy distribution
   const rStrategyCount: Record<string, number> = {};
   for (const p of rStrategyProducts) {
-    if (p.rStrategyResult) {
+    if (hasRStrategyResult(p)) {
       const key = p.rStrategyResult.primaryRecommendation;
       rStrategyCount[key] = (rStrategyCount[key] || 0) + 1;
     }
@@ -113,7 +120,7 @@ export default function PortfolioPage() {
         new Date(p.createdAt).toISOString(),
       ];
       
-      if (p.assessmentMode === 'hbr' && p.result) {
+      if (hasHBRResult(p)) {
         return [
           ...base,
           p.result.scores.access.toFixed(3),
@@ -127,7 +134,7 @@ export default function PortfolioPage() {
           // Empty R-strategy columns
           "", "", "", "", "",
         ];
-      } else if (p.assessmentMode === 'r-strategy' && p.rStrategyResult) {
+      } else if (hasRStrategyResult(p)) {
         const primaryScore = p.rStrategyResult.scores.find(
           s => s.strategy === p.rStrategyResult?.primaryRecommendation
         );
@@ -324,6 +331,60 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      {/* Method Filter */}
+      {products.length > 0 && (hbrProducts.length > 0 || rStrategyProducts.length > 0) && (
+        <div className="mb-6 bg-gray-50 rounded-xl p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Filter by method:</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setMethodFilter("all");
+                  setSelectedProduct(null);
+                }}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  methodFilter === "all"
+                    ? "bg-gray-900 text-white"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
+                }`}
+              >
+                All ({products.length})
+              </button>
+              {hbrProducts.length > 0 && (
+                <button
+                  onClick={() => {
+                    setMethodFilter("hbr");
+                    setSelectedProduct(null);
+                  }}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    methodFilter === "hbr"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-blue-50"
+                  }`}
+                >
+                  HBR Matrix ({hbrProducts.length})
+                </button>
+              )}
+              {rStrategyProducts.length > 0 && (
+                <button
+                  onClick={() => {
+                    setMethodFilter("r-strategy");
+                    setSelectedProduct(null);
+                  }}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    methodFilter === "r-strategy"
+                      ? "bg-emerald-600 text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-emerald-50"
+                  }`}
+                >
+                  R-Strategy ({rStrategyProducts.length})
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {products.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-4xl mb-4">📊</div>
@@ -346,7 +407,7 @@ export default function PortfolioPage() {
           {/* Sidebar: Product List */}
           <div className="lg:col-span-1">
             <ProductList
-              products={products}
+              products={filteredProducts}
               onRemove={removeProduct}
               onSelect={setSelectedProduct}
               onEdit={handleEdit}
@@ -355,10 +416,10 @@ export default function PortfolioPage() {
             />
 
             {/* Pin legend (HBR only) */}
-            {hbrProducts.length > 0 && <PinLegend />}
+            {methodFilter !== "r-strategy" && hbrProducts.length > 0 && <PinLegend />}
 
             {/* HBR Strategy distribution */}
-            {Object.keys(strategyCount).length > 0 && (
+            {(methodFilter === "all" || methodFilter === "hbr") && Object.keys(strategyCount).length > 0 && (
               <div className="mt-6 bg-gray-50 rounded-lg p-4">
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   HBR Strategy Distribution
@@ -370,7 +431,7 @@ export default function PortfolioPage() {
                       <div key={strategy} className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">{strategy}</span>
                         <span className="text-sm font-medium text-gray-900">
-                          {count} ({((count / products.length) * 100).toFixed(0)}
+                          {count} ({((count / hbrProducts.length) * 100).toFixed(0)}
                           %)
                         </span>
                       </div>
@@ -380,7 +441,7 @@ export default function PortfolioPage() {
             )}
 
             {/* R-Strategy distribution */}
-            {Object.keys(rStrategyCount).length > 0 && (
+            {(methodFilter === "all" || methodFilter === "r-strategy") && Object.keys(rStrategyCount).length > 0 && (
               <div className="mt-6 bg-emerald-50 rounded-lg p-4">
                 <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-3">
                   R-Strategy Distribution
@@ -392,7 +453,7 @@ export default function PortfolioPage() {
                       <div key={strategy} className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">{strategy}</span>
                         <span className="text-sm font-medium text-gray-900">
-                          {count} ({((count / products.length) * 100).toFixed(0)}
+                          {count} ({((count / rStrategyProducts.length) * 100).toFixed(0)}
                           %)
                         </span>
                       </div>
@@ -402,39 +463,50 @@ export default function PortfolioPage() {
             )}
           </div>
 
-          {/* Main: Matrix + Detail */}
+          {/* Main: Visualization + Detail */}
           <div className="lg:col-span-2">
-            {/* Matrix (HBR only) */}
-            {hbrProducts.length > 0 && (
+            {/* HBR Matrix Visualization */}
+            {(methodFilter === "all" || methodFilter === "hbr") && hbrProducts.length > 0 && (
               <>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   HBR Circularity Matrix
                 </h3>
                 <CircularityMatrix
                   products={hbrProducts}
-                  highlightCellId={selectedProduct?.assessmentMode === 'hbr' ? selectedProduct.result?.cell.id : undefined}
+                  highlightCellId={selectedProduct && hasHBRResult(selectedProduct) ? selectedProduct.result.cell.id : undefined}
                   onProductClick={(p) => setSelectedProduct(p)}
                 />
               </>
             )}
 
-            {/* R-Strategy products info */}
-            {rStrategyProducts.length > 0 && (
-              <div className={`${hbrProducts.length > 0 ? 'mt-8' : ''}`}>
+            {/* R-Strategy Scatter Plot */}
+            {(methodFilter === "all" || methodFilter === "r-strategy") && rStrategyProducts.length > 0 && (
+              <div className={methodFilter === "all" && hbrProducts.length > 0 ? "mt-8" : ""}>
                 <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
-                  R-Strategy Products ({rStrategyProducts.length})
+                  R-Strategy Suitability vs. Practicality
                 </h3>
-                <div className="bg-emerald-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600">
-                    {rStrategyProducts.length} product{rStrategyProducts.length !== 1 ? 's' : ''} assessed using the R-Strategy Scorecard framework. 
-                    Select a product from the sidebar to view detailed results including the Suitability vs. Practicality scatter plot.
-                  </p>
-                </div>
+                <RStrategyScatterPlot
+                  products={rStrategyProducts}
+                  onProductClick={(p) => setSelectedProduct(p)}
+                  selectedProductId={selectedProduct?.id}
+                />
+              </div>
+            )}
+
+            {/* R-Strategy products info (when HBR matrix is showing but no R-strategy viz) */}
+            {methodFilter === "all" && rStrategyProducts.length > 0 && hbrProducts.length > 0 && (
+              <div className="mt-6 bg-emerald-50 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-emerald-700 mb-2">
+                  {rStrategyProducts.length} R-Strategy Product{rStrategyProducts.length !== 1 ? 's' : ''}
+                </h4>
+                <p className="text-sm text-gray-600">
+                  Select a product from the sidebar to view the R-Strategy scatter plot and scorecard details.
+                </p>
               </div>
             )}
 
             {/* Selected product detail */}
-            {selectedProduct && (
+            {selectedProduct && filteredProducts.find(p => p.id === selectedProduct.id) && (
               <div className="mt-8 border-t pt-6">
                 <ResultsCard
                   productName={selectedProduct.name}

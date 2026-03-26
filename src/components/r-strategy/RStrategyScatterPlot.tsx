@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { Product } from '@/lib/types';
 import { RStrategyResult, RStrategyScore, RSTRATEGY_ZONES, RECYCLE_HIGH_VALUE_ZONE, RStrategy } from '@/lib/r-strategy/types';
 import { RSTRATEGY_DESCRIPTIONS } from '@/lib/r-strategy/types';
+import { getProductPinColor } from '../ProductList';
 
 interface RStrategyScatterPlotProps {
-  result: RStrategyResult;
+  // Single product mode
+  result?: RStrategyResult;
+  // Multi-product mode (for portfolio)
+  products?: Product[];
+  onProductClick?: (product: Product) => void;
+  selectedProductId?: string;
 }
 
 // Zone colors with transparency for background
@@ -31,18 +38,54 @@ const getStrategyIcon = (strategy: RStrategy): string => {
   return zone?.icon || '♻️';
 };
 
-export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotProps) {
+export default function RStrategyScatterPlot({ 
+  result, 
+  products,
+  onProductClick,
+  selectedProductId 
+}: RStrategyScatterPlotProps) {
   const [hoveredZone, setHoveredZone] = useState<RStrategy | null>(null);
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [showAllZones, setShowAllZones] = useState(true);
 
-  // Get the primary score for positioning the product dot
-  const primaryScore = result.scores.find(
-    (s) => s.strategy === result.primaryRecommendation
-  ) || result.scores[0];
+  // Determine mode: single product or multi-product
+  const isMultiProduct = products && products.length > 0;
+  
+  // Single product data
+  const singleProductData = useMemo(() => {
+    if (!result) return null;
+    const primaryScore = result.scores.find(
+      (s) => s.strategy === result.primaryRecommendation
+    ) || result.scores[0];
+    
+    return {
+      result,
+      primaryScore,
+      showHighValueRecycleZone: result.isRecyclingFallback && 
+        result.recyclingReason === 'high_embedded_value',
+    };
+  }, [result]);
 
-  // Determine if we should show the high-value recycle zone
-  const showHighValueRecycleZone = result.isRecyclingFallback && 
-    result.recyclingReason === 'high_embedded_value';
+  // Multi-product data
+  const multiProductData = useMemo(() => {
+    if (!products) return [];
+    return products.map((product, index) => {
+      const rResult = product.rStrategyResult;
+      if (!rResult) return null;
+      
+      const primaryScore = rResult.scores.find(
+        (s) => s.strategy === rResult.primaryRecommendation
+      ) || rResult.scores[0];
+      
+      return {
+        product,
+        result: rResult,
+        primaryScore,
+        color: getProductPinColor(index),
+        index,
+      };
+    }).filter(Boolean);
+  }, [products]);
 
   // SVG dimensions and margins
   const width = 600;
@@ -60,6 +103,17 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
   // Generate grid lines
   const gridLines = [0, 20, 40, 60, 80, 100];
 
+  // Check if any product has high-value recycle fallback
+  const hasHighValueRecycleFallback = useMemo(() => {
+    if (isMultiProduct) {
+      return multiProductData.some(d => 
+        d?.result.isRecyclingFallback && 
+        d?.result.recyclingReason === 'high_embedded_value'
+      );
+    }
+    return singleProductData?.showHighValueRecycleZone;
+  }, [isMultiProduct, multiProductData, singleProductData]);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
@@ -68,7 +122,10 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
             R-Strategy Suitability vs. Practicality
           </h3>
           <p className="text-sm text-gray-500">
-            Your product position determines the optimal circular strategy
+            {isMultiProduct 
+              ? `${products?.length} product${products?.length !== 1 ? 's' : ''} positioned on the strategy map`
+              : 'Your product position determines the optimal circular strategy'
+            }
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -105,6 +162,34 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
           )
         )}
       </div>
+
+      {/* Multi-product legend */}
+      {isMultiProduct && multiProductData.length > 0 && (
+        <div className="mb-4 bg-gray-50 rounded-lg p-3 max-h-24 overflow-y-auto">
+          <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Product Legend</div>
+          <div className="flex flex-wrap gap-2">
+            {multiProductData.map((data) => (
+              <button
+                key={data!.product.id}
+                onClick={() => onProductClick?.(data!.product)}
+                onMouseEnter={() => setHoveredProductId(data!.product.id)}
+                onMouseLeave={() => setHoveredProductId(null)}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-all ${
+                  selectedProductId === data!.product.id 
+                    ? 'ring-2 ring-emerald-500 bg-emerald-50' 
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: data!.color }}
+                />
+                <span className="truncate max-w-[120px]">{data!.product.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Scatter Plot SVG */}
       <svg
@@ -146,7 +231,7 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
         ))}
 
         {/* High-value recycle zone (if applicable) */}
-        {showHighValueRecycleZone && (
+        {hasHighValueRecycleFallback && (
           <g>
             <rect
               x={xScale(RECYCLE_HIGH_VALUE_ZONE.practicalityMin)}
@@ -270,29 +355,92 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
           );
         })}
 
-        {/* Product position dot */}
-        <g>
-          <circle
-            cx={xScale(primaryScore.practicalityScore)}
-            cy={yScale(primaryScore.suitabilityScore)}
-            r={12}
-            fill={ZONE_BORDERS[result.primaryRecommendation]}
-            stroke="white"
-            strokeWidth={3}
-            className="animate-pulse"
-          />
-          <text
-            x={xScale(primaryScore.practicalityScore)}
-            y={yScale(primaryScore.suitabilityScore) + 4}
-            textAnchor="middle"
-            className="text-xs font-bold fill-white pointer-events-none"
-          >
-            You
-          </text>
-        </g>
+        {/* Multi-product dots */}
+        {isMultiProduct && multiProductData.map((data) => {
+          if (!data) return null;
+          const isHovered = hoveredProductId === data.product.id;
+          const isSelected = selectedProductId === data.product.id;
+          
+          return (
+            <g
+              key={data.product.id}
+              onClick={() => onProductClick?.(data.product)}
+              onMouseEnter={() => setHoveredProductId(data.product.id)}
+              onMouseLeave={() => setHoveredProductId(null)}
+              className="cursor-pointer"
+            >
+              <circle
+                cx={xScale(data.primaryScore.practicalityScore)}
+                cy={yScale(data.primaryScore.suitabilityScore)}
+                r={isSelected ? 14 : isHovered ? 12 : 10}
+                fill={data.color}
+                stroke="white"
+                strokeWidth={isSelected ? 4 : 3}
+                className={isSelected ? '' : 'transition-all duration-200'}
+              />
+              {/* Label on hover or selected */}
+              {(isHovered || isSelected) && (
+                <g>
+                  <rect
+                    x={xScale(data.primaryScore.practicalityScore) - 60}
+                    y={yScale(data.primaryScore.suitabilityScore) - 45}
+                    width={120}
+                    height={30}
+                    rx={4}
+                    fill="white"
+                    stroke="#e5e7eb"
+                    strokeWidth={1}
+                  />
+                  <text
+                    x={xScale(data.primaryScore.practicalityScore)}
+                    y={yScale(data.primaryScore.suitabilityScore) - 30}
+                    textAnchor="middle"
+                    className="text-xs font-medium fill-gray-700"
+                  >
+                    {data.product.name.length > 15 
+                      ? data.product.name.slice(0, 15) + '...' 
+                      : data.product.name}
+                  </text>
+                  <text
+                    x={xScale(data.primaryScore.practicalityScore)}
+                    y={yScale(data.primaryScore.suitabilityScore) - 18}
+                    textAnchor="middle"
+                    className="text-[10px] fill-gray-500"
+                  >
+                    {data.result.primaryRecommendation} · S:{data.primaryScore.suitabilityScore}% P:{data.primaryScore.practicalityScore}%
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
 
-        {/* Fallback annotations */}
-        {result.isRecyclingFallback && result.recyclingReason === 'low_both_scores' && (
+        {/* Single product dot */}
+        {!isMultiProduct && singleProductData && (
+          <g>
+            <circle
+              cx={xScale(singleProductData.primaryScore.practicalityScore)}
+              cy={yScale(singleProductData.primaryScore.suitabilityScore)}
+              r={12}
+              fill={ZONE_BORDERS[singleProductData.result.primaryRecommendation]}
+              stroke="white"
+              strokeWidth={3}
+              className="animate-pulse"
+            />
+            <text
+              x={xScale(singleProductData.primaryScore.practicalityScore)}
+              y={yScale(singleProductData.primaryScore.suitabilityScore) + 4}
+              textAnchor="middle"
+              className="text-xs font-bold fill-white pointer-events-none"
+            >
+              You
+            </text>
+          </g>
+        )}
+
+        {/* Fallback annotations (single product only) */}
+        {!isMultiProduct && singleProductData?.result.isRecyclingFallback && 
+         singleProductData.result.recyclingReason === 'low_both_scores' && (
           <g>
             <rect
               x={xScale(5)}
@@ -316,7 +464,8 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
           </g>
         )}
 
-        {result.isRecyclingFallback && result.recyclingReason === 'high_embedded_value' && (
+        {!isMultiProduct && singleProductData?.result.isRecyclingFallback && 
+         singleProductData.result.recyclingReason === 'high_embedded_value' && (
           <g>
             <line
               x1={xScale(75)}
@@ -359,41 +508,54 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
 
       {/* Summary below chart */}
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-            style={{
-              backgroundColor: ZONE_COLORS[result.primaryRecommendation],
-              border: `2px solid ${ZONE_BORDERS[result.primaryRecommendation]}`,
-            }}
-          >
-            {getStrategyIcon(result.primaryRecommendation)}
+        {!isMultiProduct && singleProductData ? (
+          // Single product summary
+          <div className="flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+              style={{
+                backgroundColor: ZONE_COLORS[singleProductData.result.primaryRecommendation],
+                border: `2px solid ${ZONE_BORDERS[singleProductData.result.primaryRecommendation]}`,
+              }}
+            >
+              {getStrategyIcon(singleProductData.result.primaryRecommendation)}
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Primary Recommendation</div>
+              <div className="text-xl font-bold text-gray-900">
+                {singleProductData.result.primaryRecommendation}
+              </div>
+              <div className="text-sm text-gray-600">
+                {RSTRATEGY_DESCRIPTIONS[singleProductData.result.primaryRecommendation].shortDescription}
+              </div>
+            </div>
+            <div className="ml-auto text-right">
+              <div className="text-sm text-gray-500">Overall Score</div>
+              <div className="text-2xl font-bold" style={{ color: ZONE_BORDERS[singleProductData.result.primaryRecommendation] }}>
+                {singleProductData.primaryScore.overallScore}%
+              </div>
+              <div className="text-xs text-gray-500">
+                S: {singleProductData.primaryScore.suitabilityScore}% · P: {singleProductData.primaryScore.practicalityScore}%
+              </div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm text-gray-500">Primary Recommendation</div>
-            <div className="text-xl font-bold text-gray-900">
-              {result.primaryRecommendation}
-            </div>
-            <div className="text-sm text-gray-600">
-              {RSTRATEGY_DESCRIPTIONS[result.primaryRecommendation].shortDescription}
-            </div>
+        ) : (
+          // Multi-product summary
+          <div className="text-sm text-gray-600">
+            <p>
+              Showing {multiProductData.length} product{multiProductData.length !== 1 ? 's' : ''}. 
+              Click on any dot to view detailed results. 
+              Products are colored by their primary R-strategy recommendation.
+            </p>
           </div>
-          <div className="ml-auto text-right">
-            <div className="text-sm text-gray-500">Overall Score</div>
-            <div className="text-2xl font-bold" style={{ color: ZONE_BORDERS[result.primaryRecommendation] }}>
-              {primaryScore.overallScore}%
-            </div>
-            <div className="text-xs text-gray-500">
-              S: {primaryScore.suitabilityScore}% · P: {primaryScore.practicalityScore}%
-            </div>
-          </div>
-        </div>
+        )}
 
-        {result.secondaryRecommendations.length > 0 && (
+        {/* Secondary recommendations (single product only) */}
+        {!isMultiProduct && singleProductData?.result.secondaryRecommendations.length ? (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-500 mb-2">Also Consider</div>
             <div className="flex gap-2">
-              {result.secondaryRecommendations.map((strategy) => (
+              {singleProductData.result.secondaryRecommendations.map((strategy) => (
                 <span
                   key={strategy}
                   className="px-3 py-1 rounded-full text-sm font-medium"
@@ -408,8 +570,11 @@ export default function RStrategyScatterPlot({ result }: RStrategyScatterPlotPro
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
+
+// Re-export from barrel file
+export { RStrategyScatterPlot };

@@ -9,31 +9,85 @@ interface HelpPanelProps {
 
 const HELP_SECTIONS = [
   {
-    id: "framework",
-    title: "About the Framework",
-    content: `The Circularity Matrix is based on the Harvard Business Review article "The Circular Business Model" by Atasu, Dumas & Van Wassenhove (2021).
+    id: "frameworks-overview",
+    title: "Two Frameworks, One Goal",
+    content: `Circularity Matrix now supports two complementary approaches to circular economy strategy selection:
 
-It maps products onto an 8-cell matrix based on three dimensions:
-• Access Difficulty: How easily can you get the product back from users?
-• Process Difficulty: How easily can you recover value from returned products?
-• Embedded Value: How much material, component, brand, or technology value does the product retain?`,
+**HBR Circularity Matrix**
+Based on the Harvard Business Review article "The Circular Business Model" by Atasu, Dumas & Van Wassenhove (2021). This framework is ideal for strategic, high-level decision making.
+
+**Siemens R-Strategy Scorecard**
+A criteria-based hierarchical scoring approach that evaluates products against 7 criteria to determine optimal R-strategy (Reuse, Refurbish, Remanufacture, Repurpose, Recycle).
+
+Use the toggle in the assessment wizard or portfolio filter to switch between frameworks.`,
   },
   {
-    id: "strategies",
-    title: "The Three Strategies",
-    content: `**Retain Product Ownership (RPO)**
-The manufacturer keeps ownership and sells the function as a service (leasing, pay-per-use). Best for products with high embedded value and hard access.
+    id: "hbr-framework",
+    title: "HBR Circularity Matrix",
+    content: `The HBR Matrix maps products onto an 8-cell matrix based on three dimensions:
 
-**Product Life Extension (PLE)**
-Extend useful life through maintenance, repair, refurbishment, or remanufacturing. Best for high-value products worth preserving.
+**Access Difficulty**
+How easily can you get the product back from users? Easy = direct relationship; Hard = dispersed channels.
 
-**Design for Recycling (DFR)**
-Design products so materials can be efficiently recovered and recycled. Best for products with easy access and low complexity.`,
+**Process Difficulty** 
+How easily can you recover value from returned products? Easy = simple material recovery; Hard = complex processing.
+
+**Embedded Value**
+How much material, component, brand, or technology value does the product retain? High = worth preserving; Low = limited value.
+
+**The Three Strategies**
+• **Retain Product Ownership (RPO)**: Sell function as a service
+• **Product Life Extension (PLE)**: Repair, refurbish, remanufacture
+• **Design for Recycling (DFR)**: Design for material recovery`,
+  },
+  {
+    id: "r-strategy-framework",
+    title: "R-Strategy Scorecard",
+    content: `The R-Strategy framework evaluates products against 7 criteria across two dimensions:
+
+**Suitability Criteria (60% weight)**
+• Product durability and remaining lifetime
+• Potential for technological upgrades
+• Market demand for secondary products
+
+**Practicality Criteria (40% weight)**
+• Availability of collection infrastructure
+• Feasibility of reverse logistics
+• Labor and expertise availability
+• Environmental regulation compliance
+
+**The Five R-Strategies (hierarchical)**
+1. **Reuse**: Direct reuse with minimal processing
+2. **Refurbish**: Cosmetic/functional restoration
+3. **Remanufacture**: Systematic restoration to specs
+4. **Repurpose**: Creative adaptation for new functions
+5. **Recycle**: Material recovery as fallback`,
+  },
+  {
+    id: "which-framework",
+    title: "Which Framework Should I Use?",
+    content: `**Choose HBR Matrix when:**
+• You need a strategic, high-level view
+• Deciding between business model changes (leasing vs selling)
+• Comparing products across different categories
+• Planning portfolio-level circularity strategy
+• Presenting to executives and stakeholders
+
+**Choose R-Strategy when:**
+• You need detailed operational guidance
+• Evaluating specific product recovery options
+• Assessing feasibility of remanufacturing programs
+• Deciding between Reuse, Refurbish, or Remanufacture
+• Working with sustainability engineers
+
+**Can I use both?**
+Absolutely! Many users start with the HBR Matrix for strategic direction, then use the R-Strategy Scorecard for detailed operational planning on specific products.`,
   },
   {
     id: "scoring",
     title: "How Scoring Works",
-    content: `Each of the 8 questions is scored on a 1-5 scale:
+    content: `**HBR Matrix Scoring**
+Each of the 8 questions is scored 1-5:
 • Questions 1-3: Access Difficulty
 • Questions 4-6: Process Difficulty  
 • Questions 7-8: Embedded Value
@@ -41,20 +95,29 @@ Design products so materials can be efficiently recovered and recycled. Best for
 Scores are normalized (0-1) and averaged per dimension. A threshold of 0.5 determines:
 • Access: Easy (< 0.5) vs Hard (≥ 0.5)
 • Process: Easy (< 0.5) vs Hard (≥ 0.5)
-• Embedded Value: Low (< 0.5) vs High (≥ 0.5)`,
+• Embedded Value: Low (< 0.5) vs High (≥ 0.5)
+
+**R-Strategy Scorecard**
+Each of 7 criteria is scored 1-5 and weighted:
+• Suitability (60%): Durability, Upgradability, Market Demand
+• Practicality (40%): Infrastructure, Logistics, Labor, Regulations
+
+Products are positioned on a scatter plot and mapped to the appropriate strategy zone.`,
   },
   {
     id: "tips",
     title: "Usage Tips",
-    content: `• **Edit Products**: Click the pencil icon in your portfolio to edit answers.
-• **Duplicate**: Use the copy icon to assess similar products with slight variations.
-• **Export**: Save your portfolio as JSON (for backup/sharing), CSV (for analysis), or PDF (for reports).
-• **What-if Analysis**: See how changing embedded value affects your strategy recommendation.`,
+    content: `• **Framework Toggle**: Use the method filter in your portfolio to switch between HBR and R-Strategy views
+• **Edit Products**: Click the pencil icon in your portfolio to edit answers
+• **Duplicate**: Use the copy icon to assess similar products with slight variations
+• **Export**: Save your portfolio as JSON (for backup/sharing), CSV (for analysis), or PDF (for reports)
+• **What-if Analysis**: See how changing answers affects your strategy recommendation
+• **AI Assistant**: Get smart answer suggestions by describing your product in natural language`,
   },
 ];
 
 export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>("framework");
+  const [expandedSection, setExpandedSection] = useState<string | null>("frameworks-overview");
 
   if (!isOpen) return null;
 
@@ -143,6 +206,17 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
               </svg>
               HBR Article: The Circular Business Model
             </a>
+            <a
+              href="https://www.siemens.com/global/en/products/services/service-lifecycle-management/remanufacturing.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Siemens: R-Strategy Framework
+            </a>
           </div>
 
           {/* Creator identity */}
@@ -183,7 +257,7 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 bg-gray-50">
           <p className="text-xs text-gray-500 text-center">
-            Circularity Matrix v1.0
+            Circularity Matrix v1.1 · Dual Framework Edition
           </p>
         </div>
       </div>
