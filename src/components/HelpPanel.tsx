@@ -16,7 +16,7 @@ const HELP_SECTIONS = [
 **HBR Circularity Matrix**
 Based on the Harvard Business Review article "The Circular Business Model" by Atasu, Dumas & Van Wassenhove (2021). This framework is ideal for strategic, high-level decision making.
 
-**Siemens R-Strategy Scorecard**
+**R-Strategy Scorecard**
 A criteria-based hierarchical scoring approach that evaluates products against 7 criteria to determine optimal R-strategy (Reuse, Refurbish, Remanufacture, Repurpose, Recycle).
 
 Use the toggle in the assessment wizard or portfolio filter to switch between frameworks.`,
@@ -215,7 +215,7 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              Siemens: R-Strategy Framework
+              R-Strategy Framework
             </a>
           </div>
 

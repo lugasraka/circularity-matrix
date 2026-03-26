@@ -2,7 +2,7 @@ import { Criterion } from './types';
 
 /**
  * R-Strategy Criteria Definitions
- * Based on Siemens scorecard approach
+ * Criteria-based approach for R-strategy selection
  * 
  * Each criterion has optimal score ranges for each R-strategy
  * Scores are 0-100 where higher is better fit

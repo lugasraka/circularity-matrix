@@ -82,7 +82,7 @@ export default function HomePage() {
           Find the right circular economy strategy for your products
         </p>
         <p className="text-sm text-gray-500 mb-4">
-          Now supporting two complementary frameworks: HBR Circularity Matrix + Siemens R-Strategy Scorecard
+          Now supporting two complementary frameworks: HBR Circularity Matrix + R-Strategy Scorecard
         </p>
         <p className="text-sm text-gray-500 mb-8">
           AI-Powered · 24+ Product Templates · Dual Assessment Modes · Financial ROI Calculator
@@ -193,7 +193,7 @@ export default function HomePage() {
               R5
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Siemens R-Strategy Scorecard</h3>
+              <h3 className="text-lg font-bold text-gray-900">R-Strategy Scorecard</h3>
               <p className="text-sm text-gray-500">Criteria-based hierarchical scoring approach</p>
             </div>
           </div>

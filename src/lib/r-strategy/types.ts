@@ -1,6 +1,6 @@
 /**
  * R-Strategy Framework Types
- * Based on Siemens scorecard approach for circular economy strategy selection
+ * R-Strategy scorecard approach for circular economy strategy selection
  */
 
 export type RStrategy = 'REUSE' | 'REFURBISH' | 'REMANUFACTURE' | 'REPURPOSE' | 'RECYCLE';
@@ -90,7 +90,7 @@ export interface ZoneBoundary {
   icon: string;
 }
 
-// Zone definitions based on Siemens framework
+// Zone definitions for R-strategy framework
 export const RSTRATEGY_ZONES: ZoneBoundary[] = [
   {
     strategy: 'REUSE',

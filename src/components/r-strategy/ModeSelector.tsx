@@ -64,7 +64,7 @@ export default function ModeSelector({ currentMode, onModeChange, disabled }: Mo
                 R-Strategy Scorecard
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                Siemens scorecard approach
+                R-Strategy scorecard approach
               </div>
               <div className="text-xs text-gray-400 mt-1">
                 7 criteria · 5 R-strategies · Detailed scoring
