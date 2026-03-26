@@ -207,7 +207,7 @@ export default function HelpPanel({ isOpen, onClose }: HelpPanelProps) {
               HBR Article: The Circular Business Model
             </a>
             <a
-              href="https://www.siemens.com/global/en/products/services/service-lifecycle-management/remanufacturing.html"
+              href="https://www.din.de/en/innovation-and-research/circular-economy/standards-research-on-the-circular-economy/r-strategy-framework"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"

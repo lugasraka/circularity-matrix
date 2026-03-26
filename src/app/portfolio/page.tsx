@@ -23,13 +23,12 @@ export default function PortfolioPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [methodFilter, setMethodFilter] = useState<"all" | "hbr" | "r-strategy">("all");
+  const [methodFilter, setMethodFilter] = useState<"hbr" | "r-strategy">("hbr");
 
   const products = portfolio.products;
 
-  // Filter products by assessment mode
+  // Filter products by assessment mode (no mixing - separate frameworks)
   const filteredProducts = useMemo(() => {
-    if (methodFilter === "all") return products;
     return products.filter(p => p.assessmentMode === methodFilter);
   }, [products, methodFilter]);
 
@@ -331,55 +330,38 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      {/* Method Filter */}
-      {products.length > 0 && (hbrProducts.length > 0 || rStrategyProducts.length > 0) && (
+      {/* Method Filter - Only show when both framework types exist */}
+      {products.length > 0 && hbrProducts.length > 0 && rStrategyProducts.length > 0 && (
         <div className="mb-6 bg-gray-50 rounded-xl p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">Filter by method:</span>
+            <span className="text-sm font-medium text-gray-700">Select framework:</span>
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  setMethodFilter("all");
+                  setMethodFilter("hbr");
                   setSelectedProduct(null);
                 }}
                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                  methodFilter === "all"
-                    ? "bg-gray-900 text-white"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
+                  methodFilter === "hbr"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-blue-50"
                 }`}
               >
-                All ({products.length})
+                HBR Matrix ({hbrProducts.length})
               </button>
-              {hbrProducts.length > 0 && (
-                <button
-                  onClick={() => {
-                    setMethodFilter("hbr");
-                    setSelectedProduct(null);
-                  }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                    methodFilter === "hbr"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-700 border border-gray-200 hover:bg-blue-50"
-                  }`}
-                >
-                  HBR Matrix ({hbrProducts.length})
-                </button>
-              )}
-              {rStrategyProducts.length > 0 && (
-                <button
-                  onClick={() => {
-                    setMethodFilter("r-strategy");
-                    setSelectedProduct(null);
-                  }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                    methodFilter === "r-strategy"
-                      ? "bg-emerald-600 text-white"
-                      : "bg-white text-gray-700 border border-gray-200 hover:bg-emerald-50"
-                  }`}
-                >
-                  R-Strategy ({rStrategyProducts.length})
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setMethodFilter("r-strategy");
+                  setSelectedProduct(null);
+                }}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  methodFilter === "r-strategy"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-emerald-50"
+                }`}
+              >
+                R-Strategy ({rStrategyProducts.length})
+              </button>
             </div>
           </div>
         </div>
@@ -416,10 +398,10 @@ export default function PortfolioPage() {
             />
 
             {/* Pin legend (HBR only) */}
-            {methodFilter !== "r-strategy" && hbrProducts.length > 0 && <PinLegend />}
+            {methodFilter === "hbr" && hbrProducts.length > 0 && <PinLegend />}
 
             {/* HBR Strategy distribution */}
-            {(methodFilter === "all" || methodFilter === "hbr") && Object.keys(strategyCount).length > 0 && (
+            {methodFilter === "hbr" && Object.keys(strategyCount).length > 0 && (
               <div className="mt-6 bg-gray-50 rounded-lg p-4">
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   HBR Strategy Distribution
@@ -441,7 +423,7 @@ export default function PortfolioPage() {
             )}
 
             {/* R-Strategy distribution */}
-            {(methodFilter === "all" || methodFilter === "r-strategy") && Object.keys(rStrategyCount).length > 0 && (
+            {methodFilter === "r-strategy" && Object.keys(rStrategyCount).length > 0 && (
               <div className="mt-6 bg-emerald-50 rounded-lg p-4">
                 <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-3">
                   R-Strategy Distribution
@@ -466,7 +448,7 @@ export default function PortfolioPage() {
           {/* Main: Visualization + Detail */}
           <div className="lg:col-span-2">
             {/* HBR Matrix Visualization */}
-            {(methodFilter === "all" || methodFilter === "hbr") && hbrProducts.length > 0 && (
+            {methodFilter === "hbr" && hbrProducts.length > 0 && (
               <>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   HBR Circularity Matrix
@@ -480,8 +462,8 @@ export default function PortfolioPage() {
             )}
 
             {/* R-Strategy Scatter Plot */}
-            {(methodFilter === "all" || methodFilter === "r-strategy") && rStrategyProducts.length > 0 && (
-              <div className={methodFilter === "all" && hbrProducts.length > 0 ? "mt-8" : ""}>
+            {methodFilter === "r-strategy" && rStrategyProducts.length > 0 && (
+              <div>
                 <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
                   R-Strategy Suitability vs. Practicality
                 </h3>
@@ -493,17 +475,7 @@ export default function PortfolioPage() {
               </div>
             )}
 
-            {/* R-Strategy products info (when HBR matrix is showing but no R-strategy viz) */}
-            {methodFilter === "all" && rStrategyProducts.length > 0 && hbrProducts.length > 0 && (
-              <div className="mt-6 bg-emerald-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-emerald-700 mb-2">
-                  {rStrategyProducts.length} R-Strategy Product{rStrategyProducts.length !== 1 ? 's' : ''}
-                </h4>
-                <p className="text-sm text-gray-600">
-                  Select a product from the sidebar to view the R-Strategy scatter plot and scorecard details.
-                </p>
-              </div>
-            )}
+            
 
             {/* Selected product detail */}
             {selectedProduct && filteredProducts.find(p => p.id === selectedProduct.id) && (
