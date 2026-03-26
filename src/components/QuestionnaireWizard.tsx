@@ -263,13 +263,14 @@ export default function QuestionnaireWizard({
             autoFocus
           />
           
-          {/* AI Assistant - only for R-strategy mode */}
-          {!editingProductId && mode === 'r-strategy' && (
+          {/* AI Assistant - available for both modes */}
+          {!editingProductId && (
             <div className="mt-6 pt-6 border-t border-gray-100">
               <AIAssistantPanel
                 productName={productName}
                 onApplySuggestions={handleApplyAISuggestions}
                 currentAnswers={answers}
+                mode={mode}
               />
             </div>
           )}

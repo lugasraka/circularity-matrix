@@ -1,30 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { AISuggestion, AIAnalysisResult, analyzeProductDescription } from "../lib/ai-assistant";
-import { questions } from "../lib/questions";
+import { AISuggestion, AIAnalysisResult, analyzeProductDescription, analyzeProductDescriptionRStrategy } from "../lib/ai-assistant";
+import { questions as hbrQuestions } from "../lib/questions";
+import { rStrategyQuestions } from "../lib/r-strategy/questions";
+import { AssessmentMode } from "../lib/types";
 
 interface AIAssistantPanelProps {
   productName: string;
   onApplySuggestions: (suggestions: Record<string, number>) => void;
   currentAnswers: Record<string, number>;
+  mode: AssessmentMode;
 }
 
 export default function AIAssistantPanel({
   productName,
   onApplySuggestions,
   currentAnswers,
+  mode,
 }: AIAssistantPanelProps) {
   const [description, setDescription] = useState("");
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
 
+  // Get questions based on mode
+  const questions = mode === 'hbr' ? hbrQuestions : rStrategyQuestions;
+
   const handleAnalyze = () => {
     setIsAnalyzing(true);
     // Simulate processing delay for UX
     setTimeout(() => {
-      const result = analyzeProductDescription(productName, description);
+      const result = mode === 'hbr' 
+        ? analyzeProductDescription(productName, description)
+        : analyzeProductDescriptionRStrategy(productName, description);
       setAnalysis(result);
       setIsAnalyzing(false);
     }, 500);

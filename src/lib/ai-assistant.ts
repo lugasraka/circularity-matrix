@@ -608,3 +608,229 @@ export function hasRecognizablePattern(productName: string): boolean {
     cat.keywords.some((kw) => text.includes(kw.toLowerCase()))
   );
 }
+
+// R-Strategy category patterns with typical answers
+type RStrategyCriterion = "durability" | "upgradability" | "market-demand" | "collection-infra" | "reverse-logistics" | "labor-expertise" | "regulations";
+
+interface RStrategyCategoryPattern {
+  name: string;
+  keywords: string[];
+  typicalAnswers: Record<RStrategyCriterion, number>;
+}
+
+const rStrategyCategoryPatterns: RStrategyCategoryPattern[] = [
+  {
+    name: "Consumer Electronics",
+    keywords: ["phone", "smartphone", "laptop", "computer", "tablet", "device", "electronics", "screen"],
+    typicalAnswers: {
+      "durability": 3, "upgradability": 4, "market-demand": 4,
+      "collection-infra": 4, "reverse-logistics": 3, "labor-expertise": 4, "regulations": 4,
+    },
+  },
+  {
+    name: "Apparel & Textiles",
+    keywords: ["shirt", "pants", "dress", "shoe", "clothing", "apparel", "textile", "fabric"],
+    typicalAnswers: {
+      "durability": 3, "upgradability": 1, "market-demand": 3,
+      "collection-infra": 3, "reverse-logistics": 3, "labor-expertise": 2, "regulations": 2,
+    },
+  },
+  {
+    name: "Industrial Equipment",
+    keywords: ["machine", "equipment", "industrial", "machinery", "pump", "compressor", "motor"],
+    typicalAnswers: {
+      "durability": 5, "upgradability": 3, "market-demand": 4,
+      "collection-infra": 3, "reverse-logistics": 2, "labor-expertise": 3, "regulations": 3,
+    },
+  },
+  {
+    name: "Automotive",
+    keywords: ["car", "vehicle", "automotive", "tire", "battery", "ev", "truck"],
+    typicalAnswers: {
+      "durability": 4, "upgradability": 3, "market-demand": 4,
+      "collection-infra": 4, "reverse-logistics": 3, "labor-expertise": 3, "regulations": 5,
+    },
+  },
+  {
+    name: "Building Materials",
+    keywords: ["carpet", "flooring", "tile", "insulation", "roofing", "window", "construction"],
+    typicalAnswers: {
+      "durability": 4, "upgradability": 2, "market-demand": 3,
+      "collection-infra": 3, "reverse-logistics": 3, "labor-expertise": 2, "regulations": 3,
+    },
+  },
+  {
+    name: "Packaging",
+    keywords: ["packaging", "container", "bottle", "box", "carton", "wrapper"],
+    typicalAnswers: {
+      "durability": 2, "upgradability": 1, "market-demand": 2,
+      "collection-infra": 4, "reverse-logistics": 4, "labor-expertise": 2, "regulations": 4,
+    },
+  },
+  {
+    name: "Medical Devices",
+    keywords: ["medical", "healthcare", "hospital", "clinical", "diagnostic", "surgical"],
+    typicalAnswers: {
+      "durability": 4, "upgradability": 3, "market-demand": 3,
+      "collection-infra": 2, "reverse-logistics": 2, "labor-expertise": 4, "regulations": 5,
+    },
+  },
+  {
+    name: "Furniture",
+    keywords: ["furniture", "chair", "table", "desk", "sofa", "cabinet", "shelf"],
+    typicalAnswers: {
+      "durability": 4, "upgradability": 2, "market-demand": 3,
+      "collection-infra": 3, "reverse-logistics": 3, "labor-expertise": 3, "regulations": 2,
+    },
+  },
+];
+
+// R-Strategy criterion hints
+const rStrategyCriterionHints: Record<string, { high: string[]; low: string[] }> = {
+  "durability": {
+    high: ["robust", "durable", "long-lasting", "heavy-duty", "industrial-grade", "metal", "solid"],
+    low: ["fragile", "disposable", "single-use", "lightweight", "plastic", "temporary"],
+  },
+  "upgradability": {
+    high: ["modular", "upgradeable", "swappable", "expandable", "software-updatable", "configurable"],
+    low: ["sealed", "integrated", "fixed", "proprietary", "closed-system"],
+  },
+  "market-demand": {
+    high: ["popular", "high-demand", "premium", "vintage", "collectible", "limited-edition"],
+    low: ["obsolete", "outdated", "niche", "specialized", "deprecated"],
+  },
+  "collection-infra": {
+    high: ["widespread", "established", "retail-network", "global", "ubiquitous"],
+    low: ["limited", "regional", "scarce", "undeveloped", "new-market"],
+  },
+  "reverse-logistics": {
+    high: ["efficient", "cost-effective", "streamlined", "optimized", "existing-network"],
+    low: ["expensive", "complex", "difficult", "no-infrastructure", "challenging"],
+  },
+  "labor-expertise": {
+    high: ["skilled-workforce", "trained", "expert", "certified", "experienced"],
+    low: ["unskilled", "rare-expertise", "specialized-training", "scarce-talent"],
+  },
+  "regulations": {
+    high: ["regulated", "compliant", "standardized", "certified", "e-waste", "battery-directive"],
+    low: ["unregulated", "new-category", "no-standards", "emerging-market"],
+  },
+};
+
+/**
+ * Analyze product description for R-Strategy Scorecard
+ */
+export function analyzeProductDescriptionRStrategy(
+  productName: string,
+  description: string = ""
+): AIAnalysisResult {
+  const fullText = `${productName} ${description}`.toLowerCase();
+  const suggestions: AISuggestion[] = [];
+  
+  // Identify product category
+  let bestCategory = null;
+  let highestConfidence = 0;
+  const keyIndicators: string[] = [];
+
+  for (const category of rStrategyCategoryPatterns) {
+    let score = 0;
+    const matched: string[] = [];
+    
+    for (const keyword of category.keywords) {
+      if (fullText.includes(keyword.toLowerCase())) {
+        score += 2;
+        matched.push(keyword);
+      }
+    }
+    
+    if (score > highestConfidence) {
+      highestConfidence = score;
+      bestCategory = category;
+      keyIndicators.push(...matched.slice(0, 3));
+    }
+  }
+
+  // Generate suggestions for each criterion
+  const criteriaIds: RStrategyCriterion[] = ["durability", "upgradability", "market-demand", "collection-infra", "reverse-logistics", "labor-expertise", "regulations"];
+  
+  for (const criterionId of criteriaIds) {
+    let suggestedValue: number | null = null;
+    let reasoning = "";
+    let confidence: "high" | "medium" | "low" = "low";
+    const alternativeValues: number[] = [];
+    
+    // Start with category-based suggestion
+    if (bestCategory?.typicalAnswers[criterionId]) {
+      suggestedValue = bestCategory.typicalAnswers[criterionId]!;
+      reasoning = `Typical for ${bestCategory.name.toLowerCase()} products`;
+      confidence = highestConfidence >= 4 ? "high" : "medium";
+    }
+    
+    // Refine with hint patterns
+    const hints = rStrategyCriterionHints[criterionId];
+    if (hints) {
+      const highMatches = hints.high.filter(h => fullText.includes(h.toLowerCase())).length;
+      const lowMatches = hints.low.filter(h => fullText.includes(h.toLowerCase())).length;
+      
+      if (highMatches > lowMatches && highMatches > 0) {
+        const newValue = Math.min(5, (suggestedValue || 3) + 1);
+        if (newValue !== suggestedValue) {
+          if (suggestedValue) alternativeValues.push(suggestedValue);
+          suggestedValue = newValue;
+          reasoning = highMatches >= 2 ? `Strong positive indicators in description` : `Suggestion based on description`;
+          confidence = highMatches >= 2 ? "high" : "medium";
+        }
+      } else if (lowMatches > highMatches && lowMatches > 0) {
+        const newValue = Math.max(1, (suggestedValue || 3) - 1);
+        if (newValue !== suggestedValue) {
+          if (suggestedValue) alternativeValues.push(suggestedValue);
+          suggestedValue = newValue;
+          reasoning = lowMatches >= 2 ? `Strong negative indicators in description` : `Suggestion based on description`;
+          confidence = lowMatches >= 2 ? "high" : "medium";
+        }
+      }
+    }
+    
+    // Default if no suggestion
+    if (suggestedValue === null) {
+      suggestedValue = 3;
+      reasoning = "Neutral starting point — please adjust based on your specific product";
+      confidence = "low";
+      alternativeValues.push(2, 4);
+    }
+    
+    // Map criterionId to question ID
+    const questionIdMap: Record<string, string> = {
+      "durability": "rs-durability",
+      "upgradability": "rs-upgradability",
+      "market-demand": "rs-market",
+      "collection-infra": "rs-collection",
+      "reverse-logistics": "rs-logistics",
+      "labor-expertise": "rs-labor",
+      "regulations": "rs-regulations",
+    };
+    
+    suggestions.push({
+      questionId: questionIdMap[criterionId],
+      suggestedValue,
+      confidence,
+      reasoning,
+      alternativeValues: alternativeValues.length > 0 ? alternativeValues : undefined,
+    });
+  }
+  
+  const confidenceLevel: "high" | "medium" | "low" =
+    highestConfidence >= 6 ? "high" : highestConfidence >= 3 ? "medium" : "low";
+
+  const summary = bestCategory
+    ? `This appears to be a **${bestCategory.name}** product. I've pre-filled suggestions based on typical characteristics for R-strategy assessment. Please review and adjust as needed.`
+    : `I couldn't confidently categorize this product. I've provided neutral starting suggestions — please review each answer carefully.`;
+
+  return {
+    suggestions,
+    summary,
+    productCategory: bestCategory?.name || null,
+    confidenceLevel,
+    keyIndicators: [...new Set(keyIndicators)].slice(0, 5),
+  };
+}

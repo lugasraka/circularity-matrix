@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Product, hasHBRResult, hasRStrategyResult } from "../../lib/types";
 import { usePortfolio } from "../../lib/portfolio-context";
 import CircularityMatrix from "../../components/CircularityMatrix";
@@ -20,20 +20,34 @@ export default function PortfolioPage() {
     importProducts,
   } = usePortfolio();
 
+  const products = portfolio.products;
+  
+  // Separate products by framework type
+  const hbrProducts = products.filter(p => hasHBRResult(p));
+  const rStrategyProducts = products.filter(p => hasRStrategyResult(p));
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [methodFilter, setMethodFilter] = useState<"hbr" | "r-strategy">("hbr");
-
-  const products = portfolio.products;
+  
+  // Auto-select default filter based on available products
+  const defaultFilter = useMemo(() => {
+    if (hbrProducts.length > 0) return "hbr";
+    if (rStrategyProducts.length > 0) return "r-strategy";
+    return "hbr"; // fallback
+  }, [hbrProducts.length, rStrategyProducts.length]);
+  
+  const [methodFilter, setMethodFilter] = useState<"hbr" | "r-strategy">(defaultFilter);
+  
+  // Update filter when default changes (e.g., after loading products)
+  useEffect(() => {
+    setMethodFilter(defaultFilter);
+  }, [defaultFilter]);
 
   // Filter products by assessment mode (no mixing - separate frameworks)
   const filteredProducts = useMemo(() => {
     return products.filter(p => p.assessmentMode === methodFilter);
   }, [products, methodFilter]);
-
-  const hbrProducts = products.filter(p => hasHBRResult(p));
-  const rStrategyProducts = products.filter(p => hasRStrategyResult(p));
 
   // Strategy distribution (only for HBR products)
   const strategyCount: Record<string, number> = {};
