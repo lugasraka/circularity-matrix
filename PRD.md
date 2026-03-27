@@ -1,7 +1,9 @@
 # Circularity Matrix — Product Requirements Document
 
-**Version:** 1.2  
-**Framework:** Atasu, Dumas & Van Wassenhove, "The Circular Business Model," *Harvard Business Review* (2021)
+**Version:** 2.0  
+**Frameworks:** 
+- HBR Circularity Matrix (Atasu, Dumas & Van Wassenhove, 2021)
+- R-Strategy Scorecard (DIN framework)
 
 ---
 
@@ -9,7 +11,10 @@
 
 ### 1.1 Purpose
 
-A web-based decision-support tool that identifies the optimal circular economy strategy for a product using the HBR Circularity Matrix framework. Maps products onto an 8-cell matrix recommending **RPO** (Retain Product Ownership), **PLE** (Product Life Extension), or **DFR** (Design for Recycling).
+A web-based decision-support tool that identifies the optimal circular economy strategy for products using two complementary frameworks:
+
+- **HBR Circularity Matrix** — Maps products to RPO, PLE, or DFR strategies
+- **R-Strategy Scorecard** — Evaluates suitability vs. practicality for 5 R-strategies (Reuse, Refurbish, Remanufacture, Repurpose, Recycle)
 
 ### 1.2 Target Users
 
@@ -20,17 +25,18 @@ A web-based decision-support tool that identifies the optimal circular economy s
 
 ### 1.3 Key Value Propositions
 
-- **Speed** — Start from templates or AI suggestions; assess in under 1 minute
-- **Actionability** — Implementation roadmaps with timelines, stakeholders, and risks
+- **Dual frameworks** — Choose HBR Matrix for strategic positioning or R-Strategy for operational guidance
+- **Speed** — Start from 28 product templates or AI suggestions; assess in under 1 minute
+- **Actionability** — Implementation roadmaps with timelines and stakeholders
 - **Business case support** — Financial ROI calculator with 5-year projections
-- **Portfolio insights** — Multi-product comparison on single matrix
+- **Portfolio insights** — Multi-product comparison with framework filtering
 - **Privacy-first** — No data leaves the browser
 
 ---
 
 ## 2. Core Concepts
 
-### 2.1 Three Strategies
+### 2.1 HBR Circularity Matrix
 
 | Strategy | Description |
 |----------|-------------|
@@ -38,13 +44,19 @@ A web-based decision-support tool that identifies the optimal circular economy s
 | **PLE** | Extend life via repair, refurbishment, remanufacturing |
 | **DFR** | Design for material recovery and recycling |
 
-### 2.2 Three Dimensions
+**Dimensions:** Access (3 questions), Process (3 questions), Embedded Value (2 questions)
 
-| Dimension | Scale | Questions |
-|-----------|-------|-----------|
-| Access | Easy ↔ Hard | 3 (distribution, returns, reverse logistics) |
-| Process | Easy ↔ Hard | 3 (materials, disassembly, degradation) |
-| Embedded Value | Low ↔ High | 2 (material value, brand/tech value) |
+### 2.2 R-Strategy Scorecard
+
+| Strategy | Description |
+|----------|-------------|
+| **Reuse** | Direct reuse without modification |
+| **Refurbish** | Restore to working condition |
+| **Remanufacture** | Rebuild to original specifications |
+| **Repurpose** | Use for a different function |
+| **Recycle** | Recover materials |
+
+**Criteria:** Suitability (4 criteria) + Practicality (3 criteria)
 
 ---
 
@@ -54,34 +66,27 @@ A web-based decision-support tool that identifies the optimal circular economy s
 
 **Route:** `/assess`
 
-1. **Template Selection** (optional) — Choose from 12+ product presets
-2. **Product Name + AI Assist** — Describe product; AI suggests answers (client-side)
-3. **Questionnaire** — Review/refine 8 questions with smart defaults
-4. **Results** — Strategy recommendation + roadmap + financial projections
+1. **Framework Selection** — Choose HBR Matrix or R-Strategy Scorecard
+2. **Template Selection** (optional) — Choose from 28 product presets
+3. **Product Name + AI Assist** — AI suggests answers (client-side)
+4. **Questionnaire** — 8 questions (HBR) or 7 questions (R-Strategy)
+5. **Results** — Strategy recommendation + roadmap + financial projections
 
-### 3.2 Results View
-
-- Dimension scores (0–100% bars)
-- Recommended strategy with description, examples, guidance
-- **Implementation Roadmap** — Phase-by-phase actions (quick/medium/long term) with effort/cost indicators
-- **Financial Calculator** — Investment, annual benefit, payback, 5-year ROI/NPV
-- What-if toggle (flip embedded value)
-- Shareable URL generation
-
-### 3.3 Portfolio Dashboard
+### 3.2 Portfolio Dashboard
 
 **Route:** `/portfolio`
 
-- 3-column layout: product list | matrix visualization | results panel
-- Edit, duplicate, search, filter products
-- Export JSON/CSV, import JSON
-- PDF report generation
+- Framework filter (HBR / R-Strategy)
+- Matrix visualization (HBR) or scatter plot (R-Strategy)
+- Edit, duplicate, search products
+- Export JSON/CSV by framework
+- PDF report generation (dual-framework support)
 
-### 3.4 Matrix Explorer
+### 3.3 Matrix Explorer
 
 **Route:** `/explore`
 
-Browse all 8 cells without assessment. Portfolio products appear as pins for context.
+Browse both frameworks without assessment.
 
 ---
 
@@ -89,9 +94,9 @@ Browse all 8 cells without assessment. Portfolio products appear as pins for con
 
 ```
 /           Landing page
-/assess     Assessment wizard (templates → AI → questions → results)
-/portfolio  Multi-product dashboard
-/explore    Matrix reference
+/assess     Assessment wizard (framework → templates → AI → questions → results)
+/portfolio  Multi-product dashboard with framework filter
+/explore    Dual-framework reference
 ```
 
 ---
@@ -115,17 +120,17 @@ Browse all 8 cells without assessment. Portfolio products appear as pins for con
 
 ## 6. Changelog
 
-### v1.2 (Current)
-- **Assessment presets** — 12+ product templates
-- **AI-assisted assessment** — Client-side answer suggestions
-- **Implementation roadmaps** — Phase-by-phase action plans per strategy
-- **Financial calculator** — ROI, NPV, payback estimates
+### v2.0 (Current)
+- **Dual framework support** — HBR Matrix + R-Strategy Scorecard
+- **28 assessment presets** — 12 HBR + 16 R-Strategy templates
+- **Framework filtering** — View HBR or R-Strategy products separately
+- **Enhanced PDF reports** — Both frameworks in single export
 
-### v1.1
-- Product management (edit, duplicate, search, filter)
-- Data portability (JSON/CSV export/import)
-- Shareable assessment URLs
-- Onboarding tutorial
+### v1.2
+- 12 product templates
+- AI-assisted assessment
+- Implementation roadmaps
+- Financial calculator
 
 ### v1.0
 - Core assessment and matrix visualization

@@ -1,24 +1,24 @@
 # Circularity Matrix
 
-A decision-support tool that helps identify the right circular economy strategy for a product, based on the HBR Circularity Matrix framework [Atasu, Dumas & Van Wassenhove, 2021](https://hbr.org/2021/07/the-circular-business-model).
+A decision-support tool that helps identify the right circular economy strategy for products using two complementary frameworks:
 
-Users answer 8 questions across three dimensions — access difficulty, process difficulty, and embedded value — and the tool maps their product onto an 8-cell matrix recommending one or more strategies: Retain Product Ownership (RPO), Product Life Extension (PLE), or Design for Recycling (DFR).
-
-On a personal note, I built this project as I worked on portfolio circularity assessments at a large industrial tech company. I wanted a simple, interactive way to apply the HBR framework to our products and communicate strategy recommendations to stakeholders. This tool is the result — a lightweight, client-side app that can be easily deployed and shared.
+- **HBR Circularity Matrix** — Maps products to RPO, PLE, or DFR strategies [Atasu, Dumas & Van Wassenhove, 2021](https://hbr.org/2021/07/the-circular-business-model)
+- **R-Strategy Scorecard** — Evaluates 5 R-strategies (Reuse, Refurbish, Remanufacture, Repurpose, Recycle) based on the [DIN framework](https://www.din.de/en/innovation-and-research/circular-economy/standards-research-on-the-circular-economy/r-strategy-framework)
 
 ### Live Demo: [circularity-matrix.vercel.app](https://circularity-matrix.vercel.app/)
 
-## Demo/Screenshot
+## Demo
 
 ![Video-Circularity Matrix](public/circularity-matrix-demo.gif)
 
 ## Features
 
-- **Assessment wizard** — 8-question questionnaire with presets, AI-assisted answers, and what-if analysis
-- **Strategy recommendations** — RPO, PLE, and DFR strategies with examples, roadmaps, and financial projections
-- **Portfolio management** — Track and compare multiple products on a single interactive matrix
-- **Export & share** — Download PDF reports, export JSON/CSV, or share via URL
-- **Matrix explorer** — Browse all 8 strategy cells without taking the assessment
+- **Dual framework assessment** — Choose HBR Matrix (strategic) or R-Strategy Scorecard (operational)
+- **28 product presets** — Pre-filled templates for common product categories
+- **AI-assisted answers** — Client-side suggestions based on product description
+- **Strategy recommendations** — Framework-specific guidance with roadmaps and financial projections
+- **Portfolio management** — Track products with framework filtering and visualizations
+- **Export & share** — PDF reports (both frameworks), JSON/CSV export, shareable URLs
 
 ## Tech Stack
 
@@ -44,14 +44,14 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run build
 ```
 
-Produces a static export in `out/`. Deploy to any static host (Vercel, Netlify, GitHub Pages, etc.).
+Produces a static export in `out/`. Deploy to any static host.
 
 ## Project Structure
 
 ```
 src/
 ├── app/          Pages (landing, assess, portfolio, explore)
-├── components/   UI components (matrix, wizard, results, roadmaps, financial calc)
+├── components/   UI components (matrix, wizard, results, visualizations)
 └── lib/          Domain logic (types, questions, scoring, strategies, presets, AI, PDF)
 ```
 
@@ -60,11 +60,8 @@ src/
 MIT
 
 ## Created by
-**Raka Adrianto** — Sustainability Product Manager
+
+**Raka Adrianto**
 
 - GitHub: [@lugasraka](https://github.com/lugasraka)
 - LinkedIn: [linkedin.com/in/lugasraka](https://www.linkedin.com/in/lugasraka/)
-
----
-
-Feedback and contributions welcome! Open an issue or submit a pull request.
