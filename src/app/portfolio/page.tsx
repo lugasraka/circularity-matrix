@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Product, hasHBRResult, hasRStrategyResult } from "../../lib/types";
 import { usePortfolio } from "../../lib/portfolio-context";
 import CircularityMatrix from "../../components/CircularityMatrix";
@@ -83,19 +83,27 @@ export default function PortfolioPage() {
   };
 
   // Export portfolio as JSON
-  const exportJSON = () => {
+  const exportJSON = (filter?: "hbr" | "r-strategy") => {
+    const productsToExport = filter 
+      ? products.filter(p => p.assessmentMode === filter)
+      : products;
+    
     const data = {
       version: "1.1",
       exportedAt: new Date().toISOString(),
-      portfolio,
+      portfolio: {
+        products: productsToExport,
+      },
     };
+    
+    const suffix = filter ? `-${filter}` : "";
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `circularity-matrix-portfolio-${new Date().toISOString().split("T")[0]}.json`;
+    a.download = `circularity-matrix-portfolio${suffix}-${new Date().toISOString().split("T")[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -104,7 +112,11 @@ export default function PortfolioPage() {
   };
 
   // Export as CSV (includes both HBR and R-strategy products)
-  const exportCSV = () => {
+  const exportCSV = (filter?: "hbr" | "r-strategy") => {
+    const productsToExport = filter 
+      ? products.filter(p => p.assessmentMode === filter)
+      : products;
+    
     const headers = [
       "Product Name",
       "Assessment Mode",
@@ -126,7 +138,7 @@ export default function PortfolioPage() {
       "R-Strategy Rank",
     ];
 
-    const rows = products.map((p) => {
+    const rows = productsToExport.map((p) => {
       const base = [
         `"${p.name.replace(/"/g, '""')}"`,
         p.assessmentMode,
@@ -169,46 +181,17 @@ export default function PortfolioPage() {
 
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 
+    const suffix = filter ? `-${filter}` : "";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `circularity-matrix-portfolio-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `circularity-matrix-portfolio${suffix}-${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setShowExportMenu(false);
-  };
-
-  // Import portfolio from JSON
-  const importJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.portfolio && Array.isArray(data.portfolio.products)) {
-          const importCount = data.portfolio.products.length;
-          if (
-            confirm(
-              `Import ${importCount} product${importCount !== 1 ? "s" : ""}? This will add them to your current portfolio (${products.length} products).`
-            )
-          ) {
-            importProducts(data.portfolio.products, true);
-            alert(`Successfully imported ${importCount} product${importCount !== 1 ? "s" : ""}!`);
-          }
-        } else {
-          alert("Invalid file format. Expected a portfolio export file.");
-        }
-      } catch (err) {
-        alert("Error reading file: " + (err as Error).message);
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = "";
   };
 
   // Pin color legend (only HBR products have pins)
@@ -273,44 +256,91 @@ export default function PortfolioPage() {
                   📤 Export
                 </button>
                 {showExportMenu && (
-                  <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    {/* Export All */}
+                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                      <span className="text-xs font-semibold text-gray-500 uppercase">All Products ({products.length})</span>
+                    </div>
                     <button
-                      onClick={exportJSON}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg"
+                      onClick={() => exportJSON()}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       📄 Export as JSON
                     </button>
                     <button
-                      onClick={exportCSV}
+                      onClick={() => exportCSV()}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       📊 Export as CSV
                     </button>
-                    <button
-                      onClick={() => {
-                        import("@/lib/report-generator").then(({ generateReport }) => {
-                          generateReport(portfolio);
-                        });
-                        setShowExportMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg"
-                    >
-                      📑 Generate PDF Report
-                    </button>
+                    
+                    {/* HBR Export */}
+                    {hbrProducts.length > 0 && (
+                      <>
+                        <div className="px-3 py-2 bg-blue-50 border-y border-gray-100 mt-1">
+                          <span className="text-xs font-semibold text-blue-600 uppercase">HBR Matrix ({hbrProducts.length})</span>
+                        </div>
+                        <button
+                          onClick={() => exportJSON("hbr")}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                        >
+                          📄 Export HBR as JSON
+                        </button>
+                        <button
+                          onClick={() => exportCSV("hbr")}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                        >
+                          📊 Export HBR as CSV
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* R-Strategy Export */}
+                    {rStrategyProducts.length > 0 && (
+                      <>
+                        <div className="px-3 py-2 bg-emerald-50 border-y border-gray-100 mt-1">
+                          <span className="text-xs font-semibold text-emerald-600 uppercase">R-Strategy ({rStrategyProducts.length})</span>
+                        </div>
+                        <button
+                          onClick={() => exportJSON("r-strategy")}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50"
+                        >
+                          📄 Export R-Strategy as JSON
+                        </button>
+                        <button
+                          onClick={() => exportCSV("r-strategy")}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50"
+                        >
+                          📊 Export R-Strategy as CSV
+                        </button>
+                      </>
+                    )}
+                    
+                    <div className="border-t border-gray-100 mt-1">
+                      <button
+                        onClick={() => {
+                          import("@/lib/report-generator").then(({ generateReport }) => {
+                            generateReport(portfolio);
+                          });
+                          setShowExportMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg"
+                      >
+                        📑 Generate PDF Report
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Import button */}
-              <label className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                📥 Import JSON
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importJSON}
-                  className="hidden"
+              {/* Import dropdown */}
+              <div className="relative">
+                <ImportDropdown 
+                  onImport={importProducts} 
+                  hbrCount={hbrProducts.length}
+                  rStrategyCount={rStrategyProducts.length}
                 />
-              </label>
+              </div>
 
               {!showClearConfirm ? (
                 <button
@@ -509,5 +539,113 @@ export default function PortfolioPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Import Dropdown Component
+interface ImportDropdownProps {
+  onImport: (products: Product[], append: boolean) => void;
+  hbrCount: number;
+  rStrategyCount: number;
+}
+
+function ImportDropdown({ onImport, hbrCount, rStrategyCount }: ImportDropdownProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [importFilter, setImportFilter] = useState<"all" | "hbr" | "r-strategy">("all");
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        if (data.portfolio && Array.isArray(data.portfolio.products)) {
+          let productsToImport = data.portfolio.products;
+          
+          // Apply framework filter
+          if (importFilter !== "all") {
+            productsToImport = productsToImport.filter((p: Product) => p.assessmentMode === importFilter);
+          }
+          
+          const importCount = productsToImport.length;
+          if (importCount === 0) {
+            alert(`No ${importFilter === "all" ? "" : importFilter.toUpperCase()} products found in the file.`);
+            return;
+          }
+          
+          const filterLabel = importFilter !== "all" ? ` (${importFilter.toUpperCase()})` : "";
+          if (confirm(`Import ${importCount} product${importCount !== 1 ? "s" : ""}${filterLabel}?`)) {
+            onImport(productsToImport, true);
+            alert(`Successfully imported ${importCount} product${importCount !== 1 ? "s" : ""}!`);
+          }
+        } else {
+          alert("Invalid file format. Expected a portfolio export file.");
+        }
+      } catch (err) {
+        alert("Error reading file: " + (err as Error).message);
+      }
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+    setShowMenu(false);
+  };
+
+  const triggerFileSelect = (filter: "all" | "hbr" | "r-strategy") => {
+    setImportFilter(filter);
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        📥 Import
+      </button>
+      
+      {showMenu && (
+        <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+            <span className="text-xs font-semibold text-gray-500 uppercase">Select what to import</span>
+          </div>
+          
+          <button
+            onClick={() => triggerFileSelect("all")}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            📁 Import All Products
+          </button>
+          
+          <button
+            onClick={() => triggerFileSelect("hbr")}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+          >
+            🔵 Import HBR Products Only
+          </button>
+          
+          <button
+            onClick={() => triggerFileSelect("r-strategy")}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50"
+          >
+            🟢 Import R-Strategy Products Only
+          </button>
+        </div>
+      )}
+      
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+    </>
   );
 }
