@@ -17,8 +17,12 @@ export interface AIAnalysisResult {
   keyIndicators: string[];
 }
 
-// Product category patterns and their typical characteristics
-// ANSWER VALUES: 1-5 scale where:
+// ============================================
+// HBR MATRIX AI ASSISTANT
+// ============================================
+
+// Product category patterns matched to HBR presets (12 total)
+// Answer values: 1-5 scale where:
 // - For ACCESS questions: 1=Easy access, 5=Hard access
 // - For PROCESS questions: 1=Easy process, 5=Hard process  
 // - For EMBEDDED questions: 1=Low value, 5=High value
@@ -28,241 +32,238 @@ interface CategoryPattern {
   descriptionPatterns: string[];
   typicalAnswers: Partial<Record<string, number>>;
   confidenceIndicators: string[];
-  expectedStrategy: string; // Expected HBR strategy outcome
+  expectedStrategy: string;
 }
 
-// Rule-based patterns for product categorization
-// Patterns designed to produce realistic HBR Matrix outcomes
 const categoryPatterns: CategoryPattern[] = [
   {
-    name: "Consumer Electronics",
+    name: "Smartphone",
     keywords: [
-      "phone", "smartphone", "laptop", "computer", "tablet", "device",
-      "electronics", "screen", "display", "gadget", "tech",
+      "smartphone", "phone", "iphone", "samsung galaxy", "google pixel", 
+      "mobile phone", "cell phone", "android phone", "flagship phone"
     ],
     descriptionPatterns: [
-      "electronic", "digital", "smart", "tech", "battery", "charging", "software",
+      "mobile device", "cellular", "ios", "android", "smart phone", "handset"
     ],
-    // Smartphones/laptops: Hard access (dispersed), Hard process (complex), High embedded value
-    // Expected: PLE (Product Life Extension) - refurbishment/remanufacturing
+    // Hard Access, Hard Process, High Value → PLE
     typicalAnswers: {
-      "access-1": 4, // Broad retail (hard to get back)
-      "access-2": 4, // Low return incentive (trade-in exists but many don't use)
-      "access-3": 3, // Third-party systems (moderate reverse logistics)
-      "process-1": 4, // Complex materials (multi-material, electronics)
-      "process-2": 4, // Difficult disassembly (glued, sealed)
-      "process-3": 3, // Moderate degradation (functional but battery degrades)
-      "embedded-1": 4, // High material value (rare earth, metals)
-      "embedded-2": 4, // High brand value (Apple, Samsung, etc.)
+      "access-1": 4, "access-2": 3, "access-3": 3,
+      "process-1": 5, "process-2": 4, "process-3": 4,
+      "embedded-1": 4, "embedded-2": 4,
     },
-    confidenceIndicators: ["battery", "screen", "chip", "processor", "memory", "iphone", "macbook", "samsung"],
-    expectedStrategy: "PLE (Product Life Extension) - Refurbishment",
+    confidenceIndicators: ["iphone", "samsung", "pixel", "ios", "android", "smartphone"],
+    expectedStrategy: "PLE (Product Life Extension)",
   },
   {
-    name: "Apparel & Textiles",
+    name: "Laptop Computer",
     keywords: [
-      "shirt", "pants", "dress", "jacket", "shoe", "sneaker", "footwear",
-      "clothing", "apparel", "textile", "fabric", "garment", "wear",
+      "laptop", "computer", "macbook", "thinkpad", "dell xps", "notebook",
+      "business laptop", "portable computer", "chromebook", "ultrabook"
     ],
     descriptionPatterns: [
-      "wear", "clothing", "fashion", "garment", "textile", "fabric", "cotton", "polyester", "wool", "leather",
+      "portable computer", "business computer", "work laptop", "personal computer"
     ],
-    // Clothing: Hard access (dispersed), Easy process (simple materials), Low embedded value
-    // Expected: DFR (Design for Recycling) or secondhand markets
+    // Hard Access, Hard Process, High Value → PLE
     typicalAnswers: {
-      "access-1": 5, // Globally dispersed (very hard to get back)
-      "access-2": 4, // Low return incentive (no deposit, inconvenient)
-      "access-3": 3, // Moderate reverse logistics (some collection)
-      "process-1": 2, // Simple materials (mostly textiles)
-      "process-2": 2, // Easy disassembly (simple construction)
-      "process-3": 3, // Moderate degradation (wear and tear)
-      "embedded-1": 2, // Low material value (cotton, polyester)
-      "embedded-2": 2, // Low brand value (fast fashion)
+      "access-1": 4, "access-2": 3, "access-3": 3,
+      "process-1": 4, "process-2": 3, "process-3": 3,
+      "embedded-1": 4, "embedded-2": 4,
     },
-    confidenceIndicators: ["cotton", "polyester", "fashion", "fast fashion", "t-shirt", "jeans"],
-    expectedStrategy: "DFR (Design for Recycling) or Secondhand",
+    confidenceIndicators: ["macbook", "thinkpad", "dell", "hp", "lenovo", "laptop"],
+    expectedStrategy: "PLE (Product Life Extension)",
   },
   {
-    name: "Industrial Equipment",
+    name: "Office Chair",
     keywords: [
-      "machine", "equipment", "industrial", "machinery", "pump", "compressor",
-      "motor", "generator", "turbine", "engine", "heavy equipment",
+      "office chair", "desk chair", "task chair", "ergonomic chair",
+      "herman miller", "steelcase", "aeron", "gesture", "work chair"
     ],
     descriptionPatterns: [
-      "industrial", "commercial", "heavy-duty", "infrastructure", "manufacturing", "plant", "facility",
+      "office seating", "desk seating", "ergonomic seating", "workplace chair"
     ],
-    // Industrial: Easy access (B2B, contracts), Hard process (complex), High embedded value
-    // Expected: RPO (Retain Product Ownership) or PLE
+    // Moderate Access, Moderate Process, High Value → PLE
     typicalAnswers: {
-      "access-1": 1, // Direct B2B (easy to track)
-      "access-2": 1, // Contractually required (leased, serviced)
-      "access-3": 3, // Moderate reverse logistics (specialized transport)
-      "process-1": 5, // Very complex (heavy machinery, multiple systems)
-      "process-2": 4, // Difficult disassembly (bolted, heavy)
-      "process-3": 2, // Minor degradation (built to last, maintained)
-      "embedded-1": 5, // Very high material value (steel, rare earth)
-      "embedded-2": 4, // High brand value (Caterpillar, Siemens, etc.)
+      "access-1": 3, "access-2": 3, "access-3": 3,
+      "process-1": 3, "process-2": 3, "process-3": 2,
+      "embedded-1": 3, "embedded-2": 4,
     },
-    confidenceIndicators: ["industrial", "machinery", "equipment", "caterpillar", "siemens", "ge", "pump"],
-    expectedStrategy: "RPO (Retain Product Ownership) or PLE",
+    confidenceIndicators: ["herman miller", "steelcase", "aeron", "ergonomic", "office chair"],
+    expectedStrategy: "PLE (Product Life Extension)",
   },
   {
-    name: "Automotive",
+    name: "Aluminum Beverage Can",
     keywords: [
-      "car", "vehicle", "automotive", "tire", "battery", "ev", "truck", "auto",
-      "sedan", "suv", "motorcycle", "fleet",
+      "aluminum can", "beverage can", "soda can", "beer can", "drink can",
+      "aluminum beverage", "metal can", "soft drink can"
     ],
     descriptionPatterns: [
-      "vehicle", "transportation", "automotive", "driving", "engine", "motor", "mileage", "fleet",
+      "beverage container", "drink container", "single-use can", "recyclable can"
     ],
-    // Vehicles: Moderate access (dealer networks), Hard process (complex), High embedded value
-    // Expected: PLE (remanufacturing)
+    // Hard Access, Easy Process, Low Value → DFR
     typicalAnswers: {
-      "access-1": 3, // Dealer network (moderate tracking)
-      "access-2": 3, // Moderate incentive (trade-in programs)
-      "access-3": 3, // Moderate reverse logistics (established channels)
-      "process-1": 5, // Very complex (thousands of parts)
-      "process-2": 4, // Difficult disassembly (specialized tools needed)
-      "process-3": 3, // Moderate degradation (wear but maintainable)
-      "embedded-1": 4, // High material value (steel, aluminum, copper)
-      "embedded-2": 4, // High brand value (Toyota, BMW, etc.)
+      "access-1": 5, "access-2": 2, "access-3": 2,
+      "process-1": 1, "process-2": 1, "process-3": 1,
+      "embedded-1": 2, "embedded-2": 1,
     },
-    confidenceIndicators: ["vehicle", "car", "automotive", "tire", "engine", "transmission", "fleet"],
-    expectedStrategy: "PLE (Product Life Extension) - Remanufacturing",
-  },
-  {
-    name: "Packaging",
-    keywords: [
-      "packaging", "container", "bottle", "box", "carton", "wrapper", "bag",
-      "pallet", "crate", "shipping",
-    ],
-    descriptionPatterns: [
-      "packaging", "container", "shipping", "transport", "single-use", "disposable", "wrap",
-    ],
-    // Packaging: Very hard access (dispersed), Easy process (simple materials), Low embedded value
-    // Expected: DFR (Design for Recycling)
-    typicalAnswers: {
-      "access-1": 5, // Globally dispersed (impossible to track)
-      "access-2": 5, // No return incentive (discarded after use)
-      "access-3": 3, // Moderate reverse logistics (municipal recycling)
-      "process-1": 1, // Simple materials (paper, plastic, glass)
-      "process-2": 2, // Easy disassembly (not assembled)
-      "process-3": 4, // Significant degradation (consumed)
-      "embedded-1": 1, // Low material value (commodity materials)
-      "embedded-2": 1, // No brand value
-    },
-    confidenceIndicators: ["packaging", "cardboard", "plastic bag", "bottle", "container", "single-use"],
+    confidenceIndicators: ["aluminum", "soda", "beer", "beverage can", "drink can"],
     expectedStrategy: "DFR (Design for Recycling)",
   },
   {
-    name: "Building Materials",
+    name: "Commercial Carpet Tile",
     keywords: [
-      "carpet", "flooring", "tile", "insulation", "roofing", "window", "door",
-      "building", "construction", "material", "concrete", "steel beam",
+      "carpet tile", "carpet square", "modular carpet", "interface carpet",
+      "shaw carpet", "floor tile", "commercial flooring", "office carpet"
     ],
     descriptionPatterns: [
-      "construction", "building", "installation", "commercial space", "residential", "renovation", "infrastructure",
+      "modular flooring", "carpet flooring", "commercial carpet", "office flooring"
     ],
-    // Building materials: Moderate access (B2B), Moderate process, Low embedded value per unit
-    // Expected: DFR (recycling) or reuse for some materials
+    // Moderate Access, Hard Process, Low Value → DFR
     typicalAnswers: {
-      "access-1": 3, // B2B (some tracking)
-      "access-2": 3, // Moderate incentive (waste disposal costs)
-      "access-3": 4, // Easy reverse logistics (construction waste collection)
-      "process-1": 3, // Moderate complexity (layered materials)
-      "process-2": 3, // Moderate disassembly (cut, tear)
-      "process-3": 3, // Moderate degradation (wear from use)
-      "embedded-1": 2, // Low per-unit value (bulk materials)
-      "embedded-2": 2, // Low brand value
+      "access-1": 3, "access-2": 2, "access-3": 3,
+      "process-1": 4, "process-2": 4, "process-3": 3,
+      "embedded-1": 2, "embedded-2": 3,
     },
-    confidenceIndicators: ["construction", "building", "carpet", "flooring", "insulation", "concrete"],
+    confidenceIndicators: ["interface", "shaw", "carpet tile", "modular carpet", "flooring"],
     expectedStrategy: "DFR (Design for Recycling)",
   },
   {
-    name: "Medical Equipment",
+    name: "Industrial Pump",
     keywords: [
-      "medical", "healthcare", "hospital", "clinical", "diagnostic", "surgical",
-      "mri", "x-ray", "ventilator", "monitor", "sterilizer",
+      "industrial pump", "grundfos", "sulzer", "ksb", "centrifugal pump",
+      "water pump", "fluid handling", "process pump", "industrial equipment"
     ],
     descriptionPatterns: [
-      "medical", "healthcare", "clinical", "hospital", "diagnostic", "patient care", "sterile",
+      "industrial equipment", "fluid handling", "pumping equipment", "machinery"
     ],
-    // Medical: Easy access (hospitals, contracts), Hard process (regulated), High embedded value
-    // Expected: RPO or PLE
+    // Easy Access, Hard Process, High Value → RPO or PLE
     typicalAnswers: {
-      "access-1": 1, // Direct to hospitals (easy to track)
-      "access-2": 1, // Contractually managed (service contracts)
-      "access-3": 2, // Good reverse logistics (service networks)
-      "process-1": 4, // Complex (electronics, precision)
-      "process-2": 4, // Difficult disassembly (regulated, sterile)
-      "process-3": 2, // Minor degradation (maintained, high quality)
-      "embedded-1": 4, // High material value (precision metals)
-      "embedded-2": 4, // High brand value (GE, Siemens, Philips)
+      "access-1": 2, "access-2": 2, "access-3": 2,
+      "process-1": 3, "process-2": 3, "process-3": 2,
+      "embedded-1": 4, "embedded-2": 3,
     },
-    confidenceIndicators: ["medical", "hospital", "mri", "x-ray", "clinical", "healthcare equipment"],
+    confidenceIndicators: ["grundfos", "sulzer", "pump", "industrial equipment", "fluid"],
     expectedStrategy: "RPO (Retain Product Ownership) or PLE",
   },
   {
-    name: "Furniture",
+    name: "Electric Vehicle Battery",
     keywords: [
-      "furniture", "chair", "table", "desk", "sofa", "cabinet", "shelf", "bed",
-      "wardrobe", "bookshelf", "dresser",
+      "ev battery", "electric vehicle battery", "tesla battery", "lithium battery",
+      "battery pack", "nissan leaf battery", "car battery", "automotive battery"
     ],
     descriptionPatterns: [
-      "furniture", "seating", "storage", "office furniture", "home furnishings", "wooden", "upholstered",
+      "electric vehicle", "battery pack", "lithium ion", "energy storage", "ev battery"
     ],
-    // Furniture: Hard access (dispersed), Moderate process, Moderate embedded value
-    // Expected: PLE (refurbishment)
+    // Moderate Access, Hard Process, High Value → PLE
     typicalAnswers: {
-      "access-1": 4, // Broad retail (hard to track)
-      "access-2": 3, // Moderate incentive (some resale value)
-      "access-3": 3, // Moderate reverse logistics (bulk collection)
-      "process-1": 3, // Moderate complexity (wood, metal, fabric)
-      "process-2": 3, // Moderate disassembly (screws, bolts)
-      "process-3": 3, // Moderate degradation (wear, but repairable)
-      "embedded-1": 3, // Moderate material value (wood, metal)
-      "embedded-2": 3, // Moderate brand value (Herman Miller, IKEA)
+      "access-1": 3, "access-2": 3, "access-3": 3,
+      "process-1": 5, "process-2": 5, "process-3": 4,
+      "embedded-1": 5, "embedded-2": 4,
     },
-    confidenceIndicators: ["furniture", "chair", "desk", "sofa", "table", "wooden", "herman miller"],
-    expectedStrategy: "PLE (Product Life Extension) - Refurbishment",
+    confidenceIndicators: ["tesla", "ev battery", "lithium", "battery pack", "electric vehicle"],
+    expectedStrategy: "PLE (Product Life Extension)",
   },
   {
-    name: "Single-Use / Disposable",
+    name: "Athletic Footwear",
     keywords: [
-      "disposable", "single-use", "consumable", "one-time", "throwaway",
-      "napkin", "tissue", "wipe", "razor", "cup", "plate", "cutlery",
+      "running shoe", "athletic footwear", "sneaker", "nike shoe", "adidas shoe",
+      "sports shoe", "athletic shoe", "performance footwear", "trainer", "gym shoe"
     ],
     descriptionPatterns: [
-      "disposable", "single-use", "throw away", "use once", "consume", "waste",
+      "athletic footwear", "sports footwear", "running footwear", "performance shoe"
     ],
-    // Disposable: Very hard access, Easy process, Very low embedded value
-    // Expected: DFR (if recyclable) or nothing
+    // Hard Access, Hard Process, Moderate Value → DFR
     typicalAnswers: {
-      "access-1": 5, // Globally dispersed
-      "access-2": 5, // No return (discarded)
-      "access-3": 2, // Some collection (municipal waste)
-      "process-1": 1, // Simple (paper, plastic)
-      "process-2": 1, // No disassembly needed
-      "process-3": 5, // Consumed/destroyed
-      "embedded-1": 1, // Very low value
-      "embedded-2": 1, // No brand value
+      "access-1": 4, "access-2": 3, "access-3": 3,
+      "process-1": 4, "process-2": 5, "process-3": 3,
+      "embedded-1": 2, "embedded-2": 4,
     },
-    confidenceIndicators: ["disposable", "single-use", "napkin", "tissue", "wipe", "throw away"],
-    expectedStrategy: "DFR (Design for Recycling) - if recyclable",
+    confidenceIndicators: ["nike", "adidas", "running shoe", "sneaker", "athletic", "footwear"],
+    expectedStrategy: "DFR (Design for Recycling)",
+  },
+  {
+    name: "Cardboard Packaging",
+    keywords: [
+      "cardboard box", "shipping box", "carton", "paper box", "corrugated box",
+      "amazon box", "delivery box", "moving box", "packaging box"
+    ],
+    descriptionPatterns: [
+      "cardboard packaging", "paper packaging", "shipping container", "delivery box"
+    ],
+    // Hard Access, Easy Process, Low Value → DFR
+    typicalAnswers: {
+      "access-1": 5, "access-2": 3, "access-3": 2,
+      "process-1": 1, "process-2": 1, "process-3": 2,
+      "embedded-1": 1, "embedded-2": 1,
+    },
+    confidenceIndicators: ["cardboard", "shipping box", "carton", "paper box", "packaging"],
+    expectedStrategy: "DFR (Design for Recycling)",
+  },
+  {
+    name: "Wind Turbine",
+    keywords: [
+      "wind turbine", "wind generator", "ge turbine", "vestas turbine",
+      "siemens gamesa", "wind energy", "windmill", "renewable energy"
+    ],
+    descriptionPatterns: [
+      "wind energy", "renewable energy", "wind power", "energy infrastructure"
+    ],
+    // Easy Access, Hard Process, High Value → RPO or PLE
+    typicalAnswers: {
+      "access-1": 1, "access-2": 1, "access-3": 2,
+      "process-1": 4, "process-2": 4, "process-3": 3,
+      "embedded-1": 5, "embedded-2": 4,
+    },
+    confidenceIndicators: ["vestas", "ge", "siemens", "wind turbine", "wind energy"],
+    expectedStrategy: "RPO (Retain Product Ownership) or PLE",
+  },
+  {
+    name: "Disposable Coffee Cup",
+    keywords: [
+      "coffee cup", "disposable cup", "paper cup", "starbucks cup", "takeaway cup",
+      "hot beverage cup", "single-use cup", "to-go cup"
+    ],
+    descriptionPatterns: [
+      "disposable cup", "paper cup", "takeaway container", "single-use beverage"
+    ],
+    // Hard Access, Hard Process, Low Value → DFR
+    typicalAnswers: {
+      "access-1": 5, "access-2": 4, "access-3": 4,
+      "process-1": 4, "process-2": 4, "process-3": 3,
+      "embedded-1": 1, "embedded-2": 1,
+    },
+    confidenceIndicators: ["starbucks", "coffee cup", "disposable cup", "paper cup", "takeaway"],
+    expectedStrategy: "DFR (Design for Recycling)",
+  },
+  {
+    name: "Vehicle Tires",
+    keywords: [
+      "tire", "tyre", "vehicle tire", "car tire", "michelin", "goodyear",
+      "passenger tire", "automotive tire", "rubber tire"
+    ],
+    descriptionPatterns: [
+      "vehicle tire", "automotive tire", "rubber tire", "passenger tire"
+    ],
+    // Hard Access, Moderate Process, Moderate Value → PLE
+    typicalAnswers: {
+      "access-1": 4, "access-2": 3, "access-3": 3,
+      "process-1": 3, "process-2": 3, "process-3": 2,
+      "embedded-1": 3, "embedded-2": 3,
+    },
+    confidenceIndicators: ["michelin", "goodyear", "tire", "tyre", "automotive"],
+    expectedStrategy: "PLE (Product Life Extension) - Retreading",
   },
 ];
 
 // Question-specific hint patterns
 interface QuestionHint {
   questionId: string;
-  highValueIndicators: string[]; // These suggest HIGH value (5) = Hard access/process OR High embedded value
-  lowValueIndicators: string[];  // These suggest LOW value (1) = Easy access/process OR Low embedded value
+  highValueIndicators: string[];
+  lowValueIndicators: string[];
 }
 
 const questionHints: QuestionHint[] = [
   {
     questionId: "access-1",
-    // High = Hard to access (dispersed), Low = Easy to access (direct)
     highValueIndicators: [
       "globally", "worldwide", "many retailers", "amazon", "walmart", "supermarket",
       "mass market", "dispersed", "everywhere", "no tracking", "consumer goods",
@@ -274,7 +275,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "access-2",
-    // High = Hard to get back (no incentive), Low = Easy to get back (contract/deposit)
     highValueIndicators: [
       "discard", "throw away", "trash", "no return", "single-use", "disposable",
       "no incentive", "inconvenient", "general waste", "landfill",
@@ -286,7 +286,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "access-3",
-    // High = Poor reverse logistics, Low = Good reverse logistics
     highValueIndicators: [
       "none", "nothing", "no system", "would need to build", "expensive logistics",
       "no collection", "no infrastructure", "undeveloped", "challenging",
@@ -298,7 +297,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "process-1",
-    // High = Complex materials (hard to process), Low = Simple materials (easy to process)
     highValueIndicators: [
       "complex", "many materials", "electronics", "circuit", "composite", "multi-layer",
       "bonded", "mixed materials", "heterogeneous", "sophisticated",
@@ -310,7 +308,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "process-2",
-    // High = Hard to disassemble, Low = Easy to disassemble
     highValueIndicators: [
       "glued", "welded", "permanent", "sealed", "destructive", "impossible",
       "non-repairable", "ultrasonic welded", "adhesive", "bonded",
@@ -322,7 +319,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "process-3",
-    // High = Significant degradation, Low = Minimal degradation
     highValueIndicators: [
       "consumed", "burned", "degraded", "contaminated", "used up", "chemical change",
       "destroyed", "worn out", "exhausted", "spent",
@@ -334,7 +330,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "embedded-1",
-    // High = High material value, Low = Low material value
     highValueIndicators: [
       "precious", "rare earth", "gold", "silver", "expensive materials", "high-grade",
       "precision", "titanium", "platinum", "copper", "aluminum", "quality materials",
@@ -346,7 +341,6 @@ const questionHints: QuestionHint[] = [
   },
   {
     questionId: "embedded-2",
-    // High = High brand/tech value, Low = Low brand/tech value
     highValueIndicators: [
       "premium", "luxury", "brand", "designer", "patent", "proprietary",
       "renowned", "collectible", "high-end", "iconic", "leading brand",
@@ -359,8 +353,7 @@ const questionHints: QuestionHint[] = [
 ];
 
 /**
- * Analyze product description and generate answer suggestions
- * This is a client-side, rule-based AI assistant
+ * Analyze product description and generate answer suggestions for HBR Matrix
  */
 export function analyzeProductDescription(
   productName: string,
@@ -420,7 +413,7 @@ export function analyzeProductDescription(
     // Start with category-based suggestion
     if (bestCategory?.typicalAnswers[question.id]) {
       suggestedValue = bestCategory.typicalAnswers[question.id]!;
-      reasoning = `Typical for ${bestCategory.name.toLowerCase()} products (${bestCategory.expectedStrategy})`;
+      reasoning = `Typical for ${bestCategory.name} (${bestCategory.expectedStrategy})`;
       confidence = highestConfidence >= 5 ? "high" : "medium";
     }
 
@@ -431,24 +424,22 @@ export function analyzeProductDescription(
       const lowMatches = hint.lowValueIndicators.filter((i) => fullText.includes(i.toLowerCase())).length;
 
       if (highMatches > lowMatches && highMatches > 0) {
-        // Suggest higher value (4-5 range)
         const newValue = Math.min(5, (suggestedValue || 3) + 1);
         if (newValue !== suggestedValue) {
           if (suggestedValue) alternativeValues.push(suggestedValue);
           suggestedValue = newValue;
           reasoning = highMatches >= 2 
-            ? `Strong indicators in description suggest higher value`
+            ? `Strong indicators suggest higher value`
             : `Description suggests higher value`;
           confidence = highMatches >= 2 ? "high" : "medium";
         }
       } else if (lowMatches > highMatches && lowMatches > 0) {
-        // Suggest lower value (1-2 range)
         const newValue = Math.max(1, (suggestedValue || 3) - 1);
         if (newValue !== suggestedValue) {
           if (suggestedValue) alternativeValues.push(suggestedValue);
           suggestedValue = newValue;
           reasoning = lowMatches >= 2
-            ? `Strong indicators in description suggest lower value`
+            ? `Strong indicators suggest lower value`
             : `Description suggests lower value`;
           confidence = lowMatches >= 2 ? "high" : "medium";
         }
@@ -477,7 +468,7 @@ export function analyzeProductDescription(
     highestConfidence >= 8 ? "high" : highestConfidence >= 4 ? "medium" : "low";
 
   const summary = bestCategory
-    ? `This appears to be a **${bestCategory.name}** product. Typical strategy: ${bestCategory.expectedStrategy}. Please review and adjust suggestions for your specific product.`
+    ? `This appears to be a **${bestCategory.name}** product. Expected strategy: ${bestCategory.expectedStrategy}. Please review and adjust as needed.`
     : `I couldn't confidently categorize this product. I've provided neutral starting suggestions — please review each answer carefully.`;
 
   return {
@@ -519,7 +510,6 @@ export function hasRecognizablePattern(productName: string): boolean {
 // R-STRATEGY AI ASSISTANT
 // ============================================
 
-// R-Strategy criterion IDs from criteria.ts
 type RStrategyCriterion = 
   | "absolute-product-value" 
   | "product-durability" 
@@ -536,178 +526,199 @@ interface RStrategyCategoryPattern {
   expectedStrategy: string;
 }
 
-// R-Strategy patterns designed to produce realistic R-Strategy outcomes
-// Answer values: 1-5 where higher = better for that criterion
+// R-Strategy patterns matched to presets (16 total)
 const rStrategyCategoryPatterns: RStrategyCategoryPattern[] = [
   {
-    name: "Consumer Electronics",
-    keywords: ["phone", "smartphone", "laptop", "computer", "tablet", "device", "electronics", "screen"],
-    // Smartphones: High value, moderate durability, strong regulations, fast tech change
-    // Good logistics, moderate value recovery, high embedded value
-    // Expected: REFURBISH
+    name: "Smartphone",
+    keywords: [
+      "smartphone", "phone", "iphone", "samsung galaxy", "google pixel",
+      "mobile phone", "cell phone", "android phone"
+    ],
     typicalAnswers: {
-      "absolute-product-value": 4,      // High ($500-$2000)
-      "product-durability": 3,          // Medium (3-5 years)
-      "regulatory-pressure": 4,         // Strong (e-waste laws)
-      "technological-change": 4,        // Fast (annual updates)
-      "logistics-handling": 4,          // Easy (trade-in programs)
-      "value-recovery": 3,              // Moderate (skilled repair)
-      "embedded-value": 4,              // High (materials + brand)
+      "absolute-product-value": 4, "product-durability": 3, "regulatory-pressure": 4,
+      "technological-change": 3, "logistics-handling": 4, "value-recovery": 3, "embedded-value": 4,
     },
     expectedStrategy: "REFURBISH",
   },
   {
-    name: "Apparel & Textiles",
-    keywords: ["shirt", "pants", "dress", "shoe", "clothing", "apparel", "textile", "fabric"],
-    // Clothing: Low value, low durability, weak regulations, slow tech change
-    // Moderate logistics, difficult value recovery, low embedded value
-    // Expected: RECYCLE
+    name: "Laptop Computer",
+    keywords: [
+      "laptop", "computer", "macbook", "thinkpad", "dell xps", "notebook",
+      "business laptop", "portable computer"
+    ],
     typicalAnswers: {
-      "absolute-product-value": 2,      // Low ($20-$100)
-      "product-durability": 2,          // Low (1-3 years)
-      "regulatory-pressure": 2,         // Weak
-      "technological-change": 1,        // Very slow
-      "logistics-handling": 3,          // Moderate
-      "value-recovery": 2,              // Difficult (mixed fibers)
-      "embedded-value": 2,              // Low
-    },
-    expectedStrategy: "RECYCLE",
-  },
-  {
-    name: "Industrial Equipment",
-    keywords: ["machine", "equipment", "industrial", "machinery", "pump", "compressor", "motor"],
-    // Industrial: Very high value, very durable, weak regulations, slow tech
-    // Moderate logistics, easy value recovery, high embedded value
-    // Expected: REMANUFACTURE
-    typicalAnswers: {
-      "absolute-product-value": 5,      // Very high ($10K+)
-      "product-durability": 5,          // Very long (15+ years)
-      "regulatory-pressure": 2,         // Weak
-      "technological-change": 2,        // Slow
-      "logistics-handling": 3,          // Moderate (B2B)
-      "value-recovery": 4,              // Easy (modular)
-      "embedded-value": 5,              // Very high
-    },
-    expectedStrategy: "REMANUFACTURE",
-  },
-  {
-    name: "Automotive",
-    keywords: ["car", "vehicle", "automotive", "tire", "battery", "ev", "truck"],
-    // Vehicles: High value, durable, moderate regulations, moderate tech
-    // Good logistics, easy value recovery, high embedded value
-    // Expected: REMANUFACTURE
-    typicalAnswers: {
-      "absolute-product-value": 4,      // High ($5K-$50K)
-      "product-durability": 4,          // Long (10-15 years)
-      "regulatory-pressure": 4,         // Strong (safety/emissions)
-      "technological-change": 3,        // Moderate
-      "logistics-handling": 4,          // Easy (dealer network)
-      "value-recovery": 4,              // Easy (established)
-      "embedded-value": 4,              // High
-    },
-    expectedStrategy: "REMANUFACTURE",
-  },
-  {
-    name: "Building Materials",
-    keywords: ["carpet", "flooring", "tile", "insulation", "roofing", "window", "construction"],
-    // Building: Low value, durable, moderate regulations, slow tech
-    // Moderate logistics, difficult recovery, low embedded value
-    // Expected: RECYCLE
-    typicalAnswers: {
-      "absolute-product-value": 2,      // Low per unit
-      "product-durability": 4,          // Durable
-      "regulatory-pressure": 3,         // Moderate
-      "technological-change": 2,        // Slow
-      "logistics-handling": 3,          // Moderate
-      "value-recovery": 2,              // Difficult (layered)
-      "embedded-value": 2,              // Low
-    },
-    expectedStrategy: "RECYCLE",
-  },
-  {
-    name: "Packaging",
-    keywords: ["packaging", "container", "bottle", "box", "carton", "wrapper"],
-    // Packaging: Very low value, not durable, moderate regulations, no tech change
-    // Very easy logistics, very easy recovery, very low embedded value
-    // Expected: RECYCLE
-    typicalAnswers: {
-      "absolute-product-value": 1,      // Very low (<$1)
-      "product-durability": 1,          // Single-use
-      "regulatory-pressure": 3,         // Moderate (EPR)
-      "technological-change": 1,        // None
-      "logistics-handling": 5,          // Very easy (municipal)
-      "value-recovery": 5,              // Very easy (pulping)
-      "embedded-value": 1,              // Very low
-    },
-    expectedStrategy: "RECYCLE",
-  },
-  {
-    name: "Medical Devices",
-    keywords: ["medical", "healthcare", "hospital", "clinical", "diagnostic", "surgical"],
-    // Medical: High value, durable, very strong regulations, moderate tech
-    // Difficult logistics, moderate recovery, high embedded value
-    // Expected: REMANUFACTURE
-    typicalAnswers: {
-      "absolute-product-value": 4,      // High ($10K-$100K)
-      "product-durability": 4,          // Durable
-      "regulatory-pressure": 5,         // Very strong (FDA)
-      "technological-change": 3,        // Moderate
-      "logistics-handling": 2,          // Difficult (specialized)
-      "value-recovery": 3,              // Moderate
-      "embedded-value": 4,              // High
-    },
-    expectedStrategy: "REMANUFACTURE",
-  },
-  {
-    name: "Furniture",
-    keywords: ["furniture", "chair", "table", "desk", "sofa", "cabinet", "shelf"],
-    // Furniture: Medium value, durable, weak regulations, no tech change
-    // Moderate logistics, moderate recovery, moderate embedded value
-    // Expected: REFURBISH
-    typicalAnswers: {
-      "absolute-product-value": 3,      // Medium ($200-$2000)
-      "product-durability": 4,          // Durable (10+ years)
-      "regulatory-pressure": 2,         // Weak
-      "technological-change": 1,        // None
-      "logistics-handling": 3,          // Moderate
-      "value-recovery": 3,              // Moderate
-      "embedded-value": 3,              // Moderate
+      "absolute-product-value": 4, "product-durability": 4, "regulatory-pressure": 3,
+      "technological-change": 3, "logistics-handling": 4, "value-recovery": 3, "embedded-value": 4,
     },
     expectedStrategy: "REFURBISH",
   },
   {
-    name: "Energy Storage / EV Battery",
-    keywords: ["ev battery", "lithium battery", "energy storage", "battery pack", "powerwall"],
-    // EV Batteries: Very high value, moderate durability, strong regulations, fast tech
-    // Moderate logistics, difficult recovery, very high embedded value
-    // Expected: REPURPOSE (second-life)
+    name: "Television / Display",
+    keywords: [
+      "television", "tv", "display", "monitor", "led tv", "lcd tv", "smart tv",
+      "screen", "flat panel", "oled"
+    ],
     typicalAnswers: {
-      "absolute-product-value": 5,      // Very high ($5K-$15K)
-      "product-durability": 3,          // Moderate (degrades)
-      "regulatory-pressure": 4,         // Strong (battery laws)
-      "technological-change": 4,        // Fast (improving)
-      "logistics-handling": 3,          // Moderate (hazardous)
-      "value-recovery": 2,              // Difficult (complex chemistry)
-      "embedded-value": 5,              // Very high (materials)
+      "absolute-product-value": 3, "product-durability": 3, "regulatory-pressure": 2,
+      "technological-change": 4, "logistics-handling": 2, "value-recovery": 2, "embedded-value": 3,
+    },
+    expectedStrategy: "REFURBISH",
+  },
+  {
+    name: "Electric Vehicle Battery",
+    keywords: [
+      "ev battery", "electric vehicle battery", "tesla battery", "lithium battery",
+      "battery pack", "nissan leaf battery", "car battery"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 5, "product-durability": 3, "regulatory-pressure": 4,
+      "technological-change": 3, "logistics-handling": 3, "value-recovery": 2, "embedded-value": 5,
     },
     expectedStrategy: "REPURPOSE",
   },
   {
-    name: "Returnable Packaging",
-    keywords: ["returnable crate", "reusable pallet", "rpc", "returnable container", "pool packaging"],
-    // Returnable packaging: Medium value, very durable, weak regulations, no tech
-    // Easy logistics, easy recovery, moderate embedded value
-    // Expected: REUSE
+    name: "Solar Panel",
+    keywords: [
+      "solar panel", "pv panel", "photovoltaic", "solar module", "solar cell",
+      "residential solar", "solar farm"
+    ],
     typicalAnswers: {
-      "absolute-product-value": 3,      // Medium ($20-$100)
-      "product-durability": 5,          // Very durable (50+ cycles)
-      "regulatory-pressure": 2,         // Weak
-      "technological-change": 1,        // None
-      "logistics-handling": 4,          // Easy (pool systems)
-      "value-recovery": 4,              // Easy (cleaning only)
-      "embedded-value": 3,              // Moderate
+      "absolute-product-value": 3, "product-durability": 5, "regulatory-pressure": 3,
+      "technological-change": 3, "logistics-handling": 3, "value-recovery": 3, "embedded-value": 4,
+    },
+    expectedStrategy: "REFURBISH",
+  },
+  {
+    name: "Industrial Pump",
+    keywords: [
+      "industrial pump", "grundfos", "sulzer", "ksb", "centrifugal pump",
+      "water pump", "fluid handling", "process pump"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 4, "product-durability": 5, "regulatory-pressure": 2,
+      "technological-change": 2, "logistics-handling": 3, "value-recovery": 4, "embedded-value": 4,
+    },
+    expectedStrategy: "REMANUFACTURE",
+  },
+  {
+    name: "Wind Turbine",
+    keywords: [
+      "wind turbine", "wind generator", "ge turbine", "vestas", "siemens gamesa",
+      "wind energy", "windmill"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 5, "product-durability": 5, "regulatory-pressure": 3,
+      "technological-change": 2, "logistics-handling": 2, "value-recovery": 4, "embedded-value": 5,
+    },
+    expectedStrategy: "REMANUFACTURE",
+  },
+  {
+    name: "Combustion Engine",
+    keywords: [
+      "engine", "combustion engine", "cummins", "caterpillar", "automotive engine",
+      "diesel engine", "gasoline engine", "motor"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 4, "product-durability": 4, "regulatory-pressure": 3,
+      "technological-change": 3, "logistics-handling": 3, "value-recovery": 4, "embedded-value": 4,
+    },
+    expectedStrategy: "REMANUFACTURE",
+  },
+  {
+    name: "Office Chair",
+    keywords: [
+      "office chair", "desk chair", "task chair", "ergonomic chair",
+      "herman miller", "steelcase", "aeron"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 4, "product-durability": 4, "regulatory-pressure": 2,
+      "technological-change": 1, "logistics-handling": 3, "value-recovery": 3, "embedded-value": 4,
+    },
+    expectedStrategy: "REFURBISH",
+  },
+  {
+    name: "Office Desk",
+    keywords: [
+      "office desk", "workstation", "desk", "standing desk", "height-adjustable desk",
+      "work table", "meeting table"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 3, "product-durability": 4, "regulatory-pressure": 2,
+      "technological-change": 2, "logistics-handling": 3, "value-recovery": 3, "embedded-value": 3,
+    },
+    expectedStrategy: "REFURBISH",
+  },
+  {
+    name: "Returnable Transport Packaging",
+    keywords: [
+      "returnable packaging", "reusable pallet", "rpc", "returnable container",
+      "chep pallet", "ifco", "pool packaging", "reusable crate"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 3, "product-durability": 4, "regulatory-pressure": 2,
+      "technological-change": 1, "logistics-handling": 4, "value-recovery": 4, "embedded-value": 3,
     },
     expectedStrategy: "REUSE",
+  },
+  {
+    name: "Aluminum Beverage Can",
+    keywords: [
+      "aluminum can", "beverage can", "soda can", "beer can", "drink can",
+      "metal can", "aluminum beverage"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 1, "product-durability": 1, "regulatory-pressure": 3,
+      "technological-change": 1, "logistics-handling": 5, "value-recovery": 5, "embedded-value": 2,
+    },
+    expectedStrategy: "RECYCLE",
+  },
+  {
+    name: "Cardboard Packaging",
+    keywords: [
+      "cardboard box", "shipping box", "carton", "paper box", "corrugated box",
+      "amazon box", "packaging box", "paper packaging"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 1, "product-durability": 1, "regulatory-pressure": 3,
+      "technological-change": 1, "logistics-handling": 5, "value-recovery": 5, "embedded-value": 1,
+    },
+    expectedStrategy: "RECYCLE",
+  },
+  {
+    name: "Vehicle Tire",
+    keywords: [
+      "tire", "tyre", "vehicle tire", "car tire", "michelin", "goodyear",
+      "passenger tire", "automotive tire", "truck tire"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 3, "product-durability": 3, "regulatory-pressure": 3,
+      "technological-change": 2, "logistics-handling": 4, "value-recovery": 4, "embedded-value": 3,
+    },
+    expectedStrategy: "REMANUFACTURE",
+  },
+  {
+    name: "Commercial Carpet Tile",
+    keywords: [
+      "carpet tile", "carpet square", "modular carpet", "interface carpet",
+      "shaw carpet", "floor tile", "commercial flooring"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 2, "product-durability": 3, "regulatory-pressure": 3,
+      "technological-change": 2, "logistics-handling": 3, "value-recovery": 2, "embedded-value": 2,
+    },
+    expectedStrategy: "RECYCLE",
+  },
+  {
+    name: "Athletic Footwear",
+    keywords: [
+      "running shoe", "athletic footwear", "sneaker", "nike", "adidas",
+      "sports shoe", "athletic shoe", "trainer", "footwear"
+    ],
+    typicalAnswers: {
+      "absolute-product-value": 2, "product-durability": 2, "regulatory-pressure": 2,
+      "technological-change": 2, "logistics-handling": 3, "value-recovery": 1, "embedded-value": 2,
+    },
+    expectedStrategy: "RECYCLE",
   },
 ];
 
@@ -715,7 +726,7 @@ const rStrategyCategoryPatterns: RStrategyCategoryPattern[] = [
 const rStrategyCriterionHints: Record<RStrategyCriterion, { high: string[]; low: string[] }> = {
   "absolute-product-value": {
     high: ["expensive", "premium", "high-end", "luxury", "valuable", "costly", "pricey", "investment"],
-    low: ["cheap", "inexpensive", "low-cost", "budget", "affordable", "disposable price"],
+    low: ["cheap", "inexpensive", "low-cost", "budget", "affordable", "disposable"],
   },
   "product-durability": {
     high: ["robust", "durable", "long-lasting", "heavy-duty", "industrial-grade", "indestructible"],
@@ -782,7 +793,6 @@ export function analyzeProductDescriptionRStrategy(
     "technological-change", "logistics-handling", "value-recovery", "embedded-value"
   ];
   
-  // Map criterionId to question ID
   const questionIdMap: Record<RStrategyCriterion, string> = {
     "absolute-product-value": "q-absolute-product-value",
     "product-durability": "q-product-durability",
@@ -802,7 +812,7 @@ export function analyzeProductDescriptionRStrategy(
     // Start with category-based suggestion
     if (bestCategory?.typicalAnswers[criterionId]) {
       suggestedValue = bestCategory.typicalAnswers[criterionId]!;
-      reasoning = `Typical for ${bestCategory.name.toLowerCase()} (${bestCategory.expectedStrategy})`;
+      reasoning = `Typical for ${bestCategory.name} (${bestCategory.expectedStrategy})`;
       confidence = highestConfidence >= 4 ? "high" : "medium";
     }
     
@@ -818,7 +828,7 @@ export function analyzeProductDescriptionRStrategy(
           if (suggestedValue) alternativeValues.push(suggestedValue);
           suggestedValue = newValue;
           reasoning = highMatches >= 2 
-            ? `Strong positive indicators in description` 
+            ? `Strong indicators suggest higher value` 
             : `Description suggests higher value`;
           confidence = highMatches >= 2 ? "high" : "medium";
         }
@@ -828,7 +838,7 @@ export function analyzeProductDescriptionRStrategy(
           if (suggestedValue) alternativeValues.push(suggestedValue);
           suggestedValue = newValue;
           reasoning = lowMatches >= 2 
-            ? `Strong negative indicators in description` 
+            ? `Strong indicators suggest lower value` 
             : `Description suggests lower value`;
           confidence = lowMatches >= 2 ? "high" : "medium";
         }
@@ -856,7 +866,7 @@ export function analyzeProductDescriptionRStrategy(
     highestConfidence >= 6 ? "high" : highestConfidence >= 3 ? "medium" : "low";
 
   const summary = bestCategory
-    ? `This appears to be a **${bestCategory.name}** product. Typical recommendation: **${bestCategory.expectedStrategy}**. Please review and adjust as needed.`
+    ? `This appears to be a **${bestCategory.name}** product. Expected recommendation: **${bestCategory.expectedStrategy}**. Please review and adjust as needed.`
     : `I couldn't confidently categorize this product. I've provided neutral starting suggestions — please review each answer carefully.`;
 
   return {
