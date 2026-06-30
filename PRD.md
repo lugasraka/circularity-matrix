@@ -1,6 +1,6 @@
 # Circularity Matrix — Product Requirements Document
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Frameworks:** 
 - HBR Circularity Matrix (Atasu, Dumas & Van Wassenhove, 2021)
 - R-Strategy Scorecard (DIN framework)
@@ -28,8 +28,9 @@ A web-based decision-support tool that identifies the optimal circular economy s
 - **Dual frameworks** — Choose HBR Matrix for strategic positioning or R-Strategy for operational guidance
 - **Speed** — Start from 28 product templates or AI suggestions; assess in under 1 minute
 - **Actionability** — Implementation roadmaps with timelines and stakeholders
-- **Business case support** — Financial ROI calculator with 5-year projections
+- **Business case support** — Financial ROI calculator with editable, transparent assumptions and multi-year projections
 - **Portfolio insights** — Multi-product comparison with framework filtering
+- **Data ownership** — One-click JSON backup and restore; portfolio never leaves the browser
 - **Privacy-first** — No data leaves the browser
 
 ---
@@ -72,6 +73,17 @@ A web-based decision-support tool that identifies the optimal circular economy s
 4. **Questionnaire** — 8 questions (HBR) or 7 questions (R-Strategy)
 5. **Results** — Strategy recommendation + roadmap + financial projections
 
+#### Financial Calculator
+
+Part of the HBR results view. Estimates investment, ROI, payback, and NPV for each
+recommended strategy. All model assumptions are **transparent and editable**:
+
+- **Global** — discount rate and analysis horizon (years)
+- **Per strategy** — e.g. service premium, utilization, refurbishment cost, resale price,
+  material recovery rate, partnership cost
+- Plain-language **formula breakdown** for each strategy (investment / revenue / cost)
+- Projections **recalculate live** as assumptions change; one-click **reset to defaults**
+
 ### 3.2 Portfolio Dashboard
 
 **Route:** `/portfolio`
@@ -79,6 +91,9 @@ A web-based decision-support tool that identifies the optimal circular economy s
 - Framework filter (HBR / R-Strategy)
 - Matrix visualization (HBR) or scatter plot (R-Strategy)
 - Edit, duplicate, search products
+- **Data-safety notice** with one-click "Back up now" (full JSON export)
+- **Import (merge)** — append products from a file, optionally filtered by framework
+- **Restore (replace all)** — replace the portfolio from a backup, preserving product identity
 - Export JSON/CSV by framework
 - PDF report generation (dual-framework support)
 
@@ -120,7 +135,11 @@ Browse both frameworks without assessment.
 
 ## 6. Changelog
 
-### v2.0 (Current)
+### v2.1 (Current)
+- **Editable financial assumptions** — discount rate, analysis horizon, and per-strategy levers, with live recalculation, formula breakdowns, and reset-to-defaults
+- **Portfolio backup & restore** — data-safety notice with one-click JSON backup; restore replaces the portfolio while preserving product identity
+
+### v2.0
 - **Dual framework support** — HBR Matrix + R-Strategy Scorecard
 - **28 assessment presets** — 12 HBR + 16 R-Strategy templates
 - **Framework filtering** — View HBR or R-Strategy products separately

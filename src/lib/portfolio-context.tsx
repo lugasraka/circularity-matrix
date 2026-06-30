@@ -21,6 +21,7 @@ interface PortfolioContextValue {
   clearPortfolio: () => void;
   duplicateProduct: (productId: string) => void;
   importProducts: (products: Product[], merge?: boolean) => void;
+  restoreBackup: (products: Product[]) => void;
   // Onboarding
   hasSeenOnboarding: boolean;
   markOnboardingSeen: () => void;
@@ -152,6 +153,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     setHasSeenOnboarding(true);
     saveOnboardingStatus(true);
   }, []);
+  // Replace the entire portfolio from a backup, preserving product identity
+  // (ids, names, timestamps) for a faithful round-trip restore.
+  const restoreBackup = useCallback((products: Product[]) => {
+    setPortfolio({ products });
+  }, []);
 
   return (
     <PortfolioContext.Provider
@@ -163,6 +169,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         clearPortfolio,
         duplicateProduct,
         importProducts,
+        restoreBackup,
         hasSeenOnboarding,
         markOnboardingSeen,
       }}

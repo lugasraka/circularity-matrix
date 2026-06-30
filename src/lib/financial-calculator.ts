@@ -35,8 +35,37 @@ export interface FinancialCalculationResult {
   }[];
 }
 
+export interface RPOAssumptions {
+  servicePricePremium: number; // Premium for service vs outright sale
+  utilizationRate: number; // Average asset utilization across lifecycle
+  maintenanceCostPercent: number; // Annual maintenance as % of unit cost
+  contractRenewalRate: number; // Share of customers who renew
+}
+
+export interface PLEAssumptions {
+  refurbishmentCostPercent: number; // Cost to refurbish as % of unit cost
+  resalePricePercent: number; // Refurbished price as % of new price
+  tradeInRate: number; // Share of customers who trade in
+  lifespanExtensionYears: number; // Average lifespan extension
+}
+
+export interface DFRAssumptions {
+  materialRecoveryRate: number; // Share of material recovered
+  recoveredMaterialValuePercent: number; // Recovered value as % of original material cost
+  designChangeCostPercent: number; // Design cost increase as % of unit cost
+  recyclingPartnershipCost: number; // Annual fixed partnership cost
+}
+
+export interface FinancialAssumptions {
+  discountRate: number; // Discount rate for NPV
+  analysisPeriod: number; // Analysis horizon in years
+  rpo: RPOAssumptions;
+  ple: PLEAssumptions;
+  dfr: DFRAssumptions;
+}
+
 // Default assumptions for financial calculations
-const DEFAULT_ASSUMPTIONS = {
+export const DEFAULT_ASSUMPTIONS: FinancialAssumptions = {
   discountRate: 0.1, // 10% discount rate for NPV
   analysisPeriod: 5, // 5-year analysis
   rpo: {
@@ -59,20 +88,40 @@ const DEFAULT_ASSUMPTIONS = {
   },
 };
 
+// Plain-language formulas shown in the UI for transparency
+export const STRATEGY_FORMULAS: Record<StrategyType, { investment: string; revenue: string; cost: string }> = {
+  RPO: {
+    investment: "max($500K, annual volume × unit cost × 50%) — capital to own the asset base",
+    revenue: "volume × (selling price × service premium × (1 + utilization)) × renewal rate",
+    cost: "volume × unit cost × (maintenance % + 5% depreciation)",
+  },
+  PLE: {
+    investment: "max($300K, annual volume × 10% × unit cost × 2) — refurbishment facility & reverse logistics",
+    revenue: "(trade-in volume × selling price × resale %) + (trade-in volume × unit cost × 50% avoided production)",
+    cost: "(trade-in volume × unit cost × refurbishment %) + (trade-in volume × unit cost × 5% logistics)",
+  },
+  DFR: {
+    investment: "max($200K, annual volume × unit cost × 5% + 3× recycling partnership cost)",
+    revenue: "volume × (recovered material value + avoided disposal cost)",
+    cost: "(volume × unit cost × design change %) + recycling partnership cost",
+  },
+};
+
 /**
  * Calculate financial projections for circular economy strategies
  * This is an estimation tool - actual results will vary significantly
  */
 export function calculateFinancials(
   inputs: FinancialInputs,
-  recommendedStrategies: StrategyType[]
+  recommendedStrategies: StrategyType[],
+  assumptions: FinancialAssumptions = DEFAULT_ASSUMPTIONS
 ): FinancialCalculationResult {
   const baselineAnnualProfit =
     (inputs.averageSellingPrice - inputs.averageUnitCost) * inputs.annualVolume -
     inputs.currentEndOfLifeCost * inputs.annualVolume;
 
   const strategies: StrategyFinancials[] = recommendedStrategies.map((strategy) =>
-    calculateStrategyFinancials(strategy, inputs, baselineAnnualProfit)
+    calculateStrategyFinancials(strategy, inputs, baselineAnnualProfit, assumptions)
   );
 
   // Sort by 5-year ROI for recommendation
@@ -97,7 +146,8 @@ export function calculateFinancials(
 function calculateStrategyFinancials(
   strategy: StrategyType,
   inputs: FinancialInputs,
-  baselineProfit: number
+  baselineProfit: number,
+  assumptions: FinancialAssumptions
 ): StrategyFinancials {
   const volume = inputs.annualVolume;
   const unitCost = inputs.averageUnitCost;
@@ -105,11 +155,11 @@ function calculateStrategyFinancials(
 
   switch (strategy) {
     case "RPO":
-      return calculateRPOFinancials(volume, unitCost, unitPrice, baselineProfit);
+      return calculateRPOFinancials(volume, unitCost, unitPrice, baselineProfit, assumptions);
     case "PLE":
-      return calculatePLEFinancials(volume, unitCost, unitPrice, baselineProfit);
+      return calculatePLEFinancials(volume, unitCost, unitPrice, baselineProfit, assumptions);
     case "DFR":
-      return calculateDFRFinancials(volume, unitCost, unitPrice, baselineProfit);
+      return calculateDFRFinancials(volume, unitCost, unitPrice, baselineProfit, assumptions);
     default:
       throw new Error(`Unknown strategy: ${strategy}`);
   }
@@ -119,9 +169,10 @@ function calculateRPOFinancials(
   volume: number,
   unitCost: number,
   unitPrice: number,
-  baselineProfit: number
+  baselineProfit: number,
+  assumptions: FinancialAssumptions
 ): StrategyFinancials {
-  const { rpo } = DEFAULT_ASSUMPTIONS;
+  const { rpo } = assumptions;
 
   // Investment: IT systems, legal framework, service infrastructure
   const estimatedInvestment = Math.max(
@@ -140,9 +191,9 @@ function calculateRPOFinancials(
   const netAnnualBenefit = annualRevenue - annualOperatingCost - baselineProfit;
   const paybackPeriodYears = netAnnualBenefit > 0 ? estimatedInvestment / netAnnualBenefit : 999;
 
-  // 5-year NPV calculation
-  const fiveYearNPV = calculateNPV(estimatedInvestment, netAnnualBenefit, 5, DEFAULT_ASSUMPTIONS.discountRate);
-  const fiveYearROI = ((netAnnualBenefit * 5 - estimatedInvestment) / estimatedInvestment) * 100;
+  // NPV calculation over the analysis period
+  const fiveYearNPV = calculateNPV(estimatedInvestment, netAnnualBenefit, assumptions.analysisPeriod, assumptions.discountRate);
+  const fiveYearROI = ((netAnnualBenefit * assumptions.analysisPeriod - estimatedInvestment) / estimatedInvestment) * 100;
 
   return {
     strategy: "RPO",
@@ -172,9 +223,10 @@ function calculatePLEFinancials(
   volume: number,
   unitCost: number,
   unitPrice: number,
-  baselineProfit: number
+  baselineProfit: number,
+  assumptions: FinancialAssumptions
 ): StrategyFinancials {
-  const { ple } = DEFAULT_ASSUMPTIONS;
+  const { ple } = assumptions;
 
   // Investment: Refurbishment facility, reverse logistics, quality systems
   const estimatedInvestment = Math.max(
@@ -196,8 +248,8 @@ function calculatePLEFinancials(
   const netAnnualBenefit = annualRevenue - annualOperatingCost - baselineProfit * 0.1; // 10% baseline cannibalization
   const paybackPeriodYears = netAnnualBenefit > 0 ? estimatedInvestment / netAnnualBenefit : 999;
 
-  const fiveYearNPV = calculateNPV(estimatedInvestment, netAnnualBenefit, 5, DEFAULT_ASSUMPTIONS.discountRate);
-  const fiveYearROI = ((netAnnualBenefit * 5 - estimatedInvestment) / estimatedInvestment) * 100;
+  const fiveYearNPV = calculateNPV(estimatedInvestment, netAnnualBenefit, assumptions.analysisPeriod, assumptions.discountRate);
+  const fiveYearROI = ((netAnnualBenefit * assumptions.analysisPeriod - estimatedInvestment) / estimatedInvestment) * 100;
 
   return {
     strategy: "PLE",
@@ -227,9 +279,10 @@ function calculateDFRFinancials(
   volume: number,
   unitCost: number,
   unitPrice: number,
-  baselineProfit: number
+  baselineProfit: number,
+  assumptions: FinancialAssumptions
 ): StrategyFinancials {
-  const { dfr } = DEFAULT_ASSUMPTIONS;
+  const { dfr } = assumptions;
 
   // Investment: Design changes, material testing, recycling partnerships
   const estimatedInvestment = Math.max(
@@ -250,8 +303,8 @@ function calculateDFRFinancials(
   const netAnnualBenefit = annualRevenue - annualOperatingCost;
   const paybackPeriodYears = netAnnualBenefit > 0 ? estimatedInvestment / netAnnualBenefit : 999;
 
-  const fiveYearNPV = calculateNPV(estimatedInvestment, netAnnualBenefit, 5, DEFAULT_ASSUMPTIONS.discountRate);
-  const fiveYearROI = ((netAnnualBenefit * 5 - estimatedInvestment) / estimatedInvestment) * 100;
+  const fiveYearNPV = calculateNPV(estimatedInvestment, netAnnualBenefit, assumptions.analysisPeriod, assumptions.discountRate);
+  const fiveYearROI = ((netAnnualBenefit * assumptions.analysisPeriod - estimatedInvestment) / estimatedInvestment) * 100;
 
   return {
     strategy: "DFR",

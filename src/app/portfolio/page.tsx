@@ -18,6 +18,7 @@ export default function PortfolioPage() {
     clearPortfolio,
     duplicateProduct,
     importProducts,
+    restoreBackup,
   } = usePortfolio();
 
   const products = portfolio.products;
@@ -29,6 +30,7 @@ export default function PortfolioPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showDataNotice, setShowDataNotice] = useState(true);
   
   // Auto-select default filter based on available products
   const defaultFilter = useMemo(() => {
@@ -226,6 +228,32 @@ export default function PortfolioPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      {/* Data safety notice — portfolio lives only in this browser */}
+      {products.length > 0 && showDataNotice && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <span className="text-lg leading-none" aria-hidden>⚠️</span>
+          <div className="flex-1 text-sm text-amber-800">
+            <span className="font-medium">Your portfolio is stored only in this browser.</span>{" "}
+            Clearing your browser data, switching devices, or using private mode will erase it.
+            Download a backup to keep your data safe.
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => exportJSON()}
+              className="px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap"
+            >
+              Back up now
+            </button>
+            <button
+              onClick={() => setShowDataNotice(false)}
+              className="text-amber-500 hover:text-amber-700 text-sm px-1"
+              aria-label="Dismiss notice"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Portfolio</h1>
@@ -337,6 +365,7 @@ export default function PortfolioPage() {
               <div className="relative">
                 <ImportDropdown 
                   onImport={importProducts} 
+                  onRestore={restoreBackup}
                   hbrCount={hbrProducts.length}
                   rStrategyCount={rStrategyProducts.length}
                 />
@@ -545,14 +574,16 @@ export default function PortfolioPage() {
 // Import Dropdown Component
 interface ImportDropdownProps {
   onImport: (products: Product[], append: boolean) => void;
+  onRestore: (products: Product[]) => void;
   hbrCount: number;
   rStrategyCount: number;
 }
 
-function ImportDropdown({ onImport, hbrCount, rStrategyCount }: ImportDropdownProps) {
+function ImportDropdown({ onImport, onRestore, hbrCount, rStrategyCount }: ImportDropdownProps) {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [importFilter, setImportFilter] = useState<"all" | "hbr" | "r-strategy">("all");
+  const [importMode, setImportMode] = useState<"merge" | "restore">("merge");
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -562,34 +593,53 @@ function ImportDropdown({ onImport, hbrCount, rStrategyCount }: ImportDropdownPr
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        if (data.portfolio && Array.isArray(data.portfolio.products)) {
-          let productsToImport = data.portfolio.products;
-          
-          // Apply framework filter
-          if (importFilter !== "all") {
-            productsToImport = productsToImport.filter((p: Product) => p.assessmentMode === importFilter);
-          }
-          
-          const importCount = productsToImport.length;
-          if (importCount === 0) {
-            alert(`No ${importFilter === "all" ? "" : importFilter.toUpperCase()} products found in the file.`);
-            return;
-          }
-          
-          const filterLabel = importFilter !== "all" ? ` (${importFilter.toUpperCase()})` : "";
-          if (confirm(`Import ${importCount} product${importCount !== 1 ? "s" : ""}${filterLabel}?`)) {
-            onImport(productsToImport, true);
-            alert(`Successfully imported ${importCount} product${importCount !== 1 ? "s" : ""}!`);
-          }
-        } else {
+        if (!data.portfolio || !Array.isArray(data.portfolio.products)) {
           alert("Invalid file format. Expected a portfolio export file.");
+          return;
+        }
+
+        const allProducts = data.portfolio.products as Product[];
+
+        // Restore mode: replace the entire portfolio, preserving identity
+        if (importMode === "restore") {
+          const count = allProducts.length;
+          if (
+            confirm(
+              `Restore from backup? This will REPLACE all current products with the ${count} product${
+                count !== 1 ? "s" : ""
+              } in this file. This cannot be undone.`
+            )
+          ) {
+            onRestore(allProducts);
+            alert(`Restored ${count} product${count !== 1 ? "s" : ""} from backup.`);
+          }
+          return;
+        }
+
+        // Merge mode: append products (with new ids), optionally filtered
+        let productsToImport = allProducts;
+        if (importFilter !== "all") {
+          productsToImport = productsToImport.filter((p: Product) => p.assessmentMode === importFilter);
+        }
+
+        const importCount = productsToImport.length;
+        if (importCount === 0) {
+          alert(`No ${importFilter === "all" ? "" : importFilter.toUpperCase()} products found in the file.`);
+          return;
+        }
+
+        const filterLabel = importFilter !== "all" ? ` (${importFilter.toUpperCase()})` : "";
+        if (confirm(`Import ${importCount} product${importCount !== 1 ? "s" : ""}${filterLabel}?`)) {
+          onImport(productsToImport, true);
+          alert(`Successfully imported ${importCount} product${importCount !== 1 ? "s" : ""}!`);
         }
       } catch (err) {
         alert("Error reading file: " + (err as Error).message);
-      }
-      // Reset input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      } finally {
+        // Reset input so the same file can be selected again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       }
     };
     reader.readAsText(file);
@@ -597,7 +647,13 @@ function ImportDropdown({ onImport, hbrCount, rStrategyCount }: ImportDropdownPr
   };
 
   const triggerFileSelect = (filter: "all" | "hbr" | "r-strategy") => {
+    setImportMode("merge");
     setImportFilter(filter);
+    fileInputRef.current?.click();
+  };
+
+  const triggerRestore = () => {
+    setImportMode("restore");
     fileInputRef.current?.click();
   };
 
@@ -611,9 +667,9 @@ function ImportDropdown({ onImport, hbrCount, rStrategyCount }: ImportDropdownPr
       </button>
       
       {showMenu && (
-        <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+        <div className="absolute right-0 mt-1 w-60 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
           <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-            <span className="text-xs font-semibold text-gray-500 uppercase">Select what to import</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase">Merge into portfolio</span>
           </div>
           
           <button
@@ -635,6 +691,16 @@ function ImportDropdown({ onImport, hbrCount, rStrategyCount }: ImportDropdownPr
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50"
           >
             🟢 Import R-Strategy Products Only
+          </button>
+
+          <div className="px-3 py-2 bg-gray-50 border-y border-gray-100 mt-1">
+            <span className="text-xs font-semibold text-gray-500 uppercase">Restore backup</span>
+          </div>
+          <button
+            onClick={triggerRestore}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-amber-50"
+          >
+            ♻️ Restore (replace all)
           </button>
         </div>
       )}

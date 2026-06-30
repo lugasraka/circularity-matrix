@@ -17,7 +17,9 @@ A decision-support tool that helps identify the right circular economy strategy 
 - **28 product presets** — Pre-filled templates for common product categories
 - **AI-assisted answers** — Client-side suggestions based on product description
 - **Strategy recommendations** — Framework-specific guidance with roadmaps and financial projections
+- **Financial calculator** — Editable, transparent assumptions with live ROI/NPV recalculation and formula breakdowns
 - **Portfolio management** — Track products with framework filtering and visualizations
+- **Backup & restore** — One-click JSON backup and full restore, plus a data-safety reminder
 - **Export & share** — PDF reports (both frameworks), JSON/CSV export, shareable URLs
 
 ## Tech Stack
