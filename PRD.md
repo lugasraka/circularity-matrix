@@ -118,13 +118,14 @@ Browse both frameworks without assessment.
 
 ## 5. Technical Architecture
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js (App Router, TypeScript) |
-| Styling | Tailwind CSS v4 |
-| State | React Context + localStorage |
-| PDF | jsPDF (dynamic import) |
-| Matrix | Custom SVG |
+| Layer      | Technology                       |
+| ---------- | -------------------------------- |
+| Framework  | Next.js (App Router, TypeScript) |
+| Styling    | Tailwind CSS v4                  |
+| State      | React Context + localStorage     |
+| PDF        | jsPDF (dynamic import)           |
+| Matrix     | Custom SVG                       |
+| Deployment | Vercel (static export)           |
 
 **Key Decisions:**
 - No backend/database — pure static site

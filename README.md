@@ -13,14 +13,11 @@ A decision-support tool that helps identify the right circular economy strategy 
 
 ## Features
 
-- **Dual framework assessment** — Choose HBR Matrix (strategic) or R-Strategy Scorecard (operational)
-- **28 product presets** — Pre-filled templates for common product categories
-- **AI-assisted answers** — Client-side suggestions based on product description
+- **Dual framework assessment** — HBR Matrix (strategic) or R-Strategy Scorecard (operational)
 - **Strategy recommendations** — Framework-specific guidance with roadmaps and financial projections
-- **Financial calculator** — Editable, transparent assumptions with live ROI/NPV recalculation and formula breakdowns
-- **Portfolio management** — Track products with framework filtering and visualizations
-- **Backup & restore** — One-click JSON backup and full restore, plus a data-safety reminder
-- **Export & share** — PDF reports (both frameworks), JSON/CSV export, shareable URLs
+- **Financial calculator** — Transparent, editable assumptions with live ROI/NPV recalculation
+- **Portfolio management** — Track products with filtering and visualizations
+- **Export & share** — PDF reports, JSON/CSV export, shareable URLs
 
 ## Tech Stack
 
@@ -28,6 +25,7 @@ A decision-support tool that helps identify the right circular economy strategy 
 - Tailwind CSS v4
 - jsPDF (client-side PDF generation)
 - React Context + localStorage for state
+- Vercel for deployment
 
 No backend. No database. No external API calls. Deploys as a static site.
 
