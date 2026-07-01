@@ -13,6 +13,9 @@ interface ProductListProps {
   selectedProductId?: string;
   showSearch?: boolean;
   showFilters?: boolean;
+  compareMode?: boolean;
+  compareIds?: Set<string>;
+  onToggleCompare?: (id: string) => void;
 }
 
 const STRATEGY_COLORS: Record<StrategyType, string> = {
@@ -48,6 +51,9 @@ export default function ProductList({
   selectedProductId,
   showSearch = true,
   showFilters = true,
+  compareMode = false,
+  compareIds,
+  onToggleCompare,
 }: ProductListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [modeFilter, setModeFilter] = useState<"all" | "hbr" | "r-strategy">("all");
@@ -299,18 +305,42 @@ export default function ProductList({
           return (
             <div
               key={product.id}
-              onClick={() => onSelect?.(product)}
+              onClick={() => {
+                if (compareMode && onToggleCompare) {
+                  onToggleCompare(product.id);
+                } else {
+                  onSelect?.(product);
+                }
+              }}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                isSelected
+                compareMode && compareIds?.has(product.id)
+                  ? "border-indigo-500 bg-indigo-50"
+                  : isSelected
                   ? "border-blue-500 bg-blue-50"
                   : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              } ${onSelect ? "cursor-pointer" : ""}`}
+              } ${onSelect || compareMode ? "cursor-pointer" : ""}`}
             >
-              {/* Color dot matching matrix pin */}
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: pinColor }}
-              />
+              {/* Compare checkbox or color dot */}
+              {compareMode ? (
+                <div
+                  className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                    compareIds?.has(product.id)
+                      ? "bg-indigo-600 border-indigo-600"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {compareIds?.has(product.id) && (
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: pinColor }}
+                />
+              )}
 
               {/* Product info */}
               <div className="flex-1 min-w-0">

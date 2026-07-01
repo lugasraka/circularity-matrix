@@ -7,6 +7,7 @@ import CircularityMatrix from "../../components/CircularityMatrix";
 import { RStrategyScatterPlot } from "../../components/r-strategy/RStrategyScatterPlot";
 import ProductList from "../../components/ProductList";
 import ResultsCard from "../../components/ResultsCard";
+import CompareProducts from "../../components/CompareProducts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -31,6 +32,9 @@ export default function PortfolioPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showDataNotice, setShowDataNotice] = useState(true);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
+  const [showComparison, setShowComparison] = useState(false);
   
   // Auto-select default filter based on available products
   const defaultFilter = useMemo(() => {
@@ -50,6 +54,28 @@ export default function PortfolioPage() {
   const filteredProducts = useMemo(() => {
     return products.filter(p => p.assessmentMode === methodFilter);
   }, [products, methodFilter]);
+
+  const toggleCompareId = (id: string) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < 4) {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitCompareMode = () => {
+    setCompareMode(false);
+    setCompareIds(new Set());
+    setShowComparison(false);
+  };
+
+  const compareProducts = useMemo(() => {
+    return filteredProducts.filter((p) => compareIds.has(p.id));
+  }, [filteredProducts, compareIds]);
 
   // Strategy distribution (only for HBR products)
   const strategyCount: Record<string, number> = {};
@@ -273,6 +299,43 @@ export default function PortfolioPage() {
           >
             + Add Product
           </Link>
+          {filteredProducts.length >= 2 && (
+            compareMode ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setShowComparison(true);
+                    setSelectedProduct(null);
+                  }}
+                  disabled={compareIds.size < 2}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    compareIds.size >= 2
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Compare ({compareIds.size})
+                </button>
+                <button
+                  onClick={exitCompareMode}
+                  className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setCompareMode(true);
+                  setShowComparison(false);
+                  setCompareIds(new Set());
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Compare
+              </button>
+            )
+          )}
           {products.length > 0 && (
             <>
               {/* Export dropdown */}
@@ -413,6 +476,7 @@ export default function PortfolioPage() {
                 onClick={() => {
                   setMethodFilter("hbr");
                   setSelectedProduct(null);
+                  exitCompareMode();
                 }}
                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   methodFilter === "hbr"
@@ -426,6 +490,7 @@ export default function PortfolioPage() {
                 onClick={() => {
                   setMethodFilter("r-strategy");
                   setSelectedProduct(null);
+                  exitCompareMode();
                 }}
                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   methodFilter === "r-strategy"
@@ -463,11 +528,14 @@ export default function PortfolioPage() {
           <div className="lg:col-span-1">
             <ProductList
               products={filteredProducts}
-              onRemove={removeProduct}
-              onSelect={setSelectedProduct}
-              onEdit={handleEdit}
-              onDuplicate={duplicateProduct}
-              selectedProductId={selectedProduct?.id}
+              onRemove={compareMode ? undefined : removeProduct}
+              onSelect={compareMode ? undefined : setSelectedProduct}
+              onEdit={compareMode ? undefined : handleEdit}
+              onDuplicate={compareMode ? undefined : duplicateProduct}
+              selectedProductId={compareMode ? undefined : selectedProduct?.id}
+              compareMode={compareMode}
+              compareIds={compareIds}
+              onToggleCompare={toggleCompareId}
             />
 
             {/* Pin legend (HBR only) */}
@@ -520,49 +588,57 @@ export default function PortfolioPage() {
 
           {/* Main: Visualization + Detail */}
           <div className="lg:col-span-2">
-            {/* HBR Matrix Visualization */}
-            {methodFilter === "hbr" && hbrProducts.length > 0 && (
+            {/* Comparison View */}
+            {showComparison && compareProducts.length >= 2 ? (
+              <CompareProducts
+                products={compareProducts}
+                onClose={exitCompareMode}
+              />
+            ) : (
               <>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  HBR Circularity Matrix
-                </h3>
-                <CircularityMatrix
-                  products={hbrProducts}
-                  highlightCellId={selectedProduct && hasHBRResult(selectedProduct) ? selectedProduct.result.cell.id : undefined}
-                  onProductClick={(p) => setSelectedProduct(p)}
-                />
+                {/* HBR Matrix Visualization */}
+                {methodFilter === "hbr" && hbrProducts.length > 0 && (
+                  <>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      HBR Circularity Matrix
+                    </h3>
+                    <CircularityMatrix
+                      products={hbrProducts}
+                      highlightCellId={selectedProduct && hasHBRResult(selectedProduct) ? selectedProduct.result.cell.id : undefined}
+                      onProductClick={(p) => setSelectedProduct(p)}
+                    />
+                  </>
+                )}
+
+                {/* R-Strategy Scatter Plot */}
+                {methodFilter === "r-strategy" && rStrategyProducts.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
+                      R-Strategy Suitability vs. Practicality
+                    </h3>
+                    <RStrategyScatterPlot
+                      products={rStrategyProducts}
+                      onProductClick={(p) => setSelectedProduct(p)}
+                      selectedProductId={selectedProduct?.id}
+                    />
+                  </div>
+                )}
+
+                {/* Selected product detail */}
+                {selectedProduct && filteredProducts.find(p => p.id === selectedProduct.id) && (
+                  <div className="mt-8 border-t pt-6">
+                    <ResultsCard
+                      productName={selectedProduct.name}
+                      assessmentMode={selectedProduct.assessmentMode}
+                      result={selectedProduct.result}
+                      answers={selectedProduct.answers}
+                      rStrategyResult={selectedProduct.rStrategyResult}
+                      rStrategyAnswers={selectedProduct.rStrategyAnswers}
+                      productId={selectedProduct.id}
+                    />
+                  </div>
+                )}
               </>
-            )}
-
-            {/* R-Strategy Scatter Plot */}
-            {methodFilter === "r-strategy" && rStrategyProducts.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
-                  R-Strategy Suitability vs. Practicality
-                </h3>
-                <RStrategyScatterPlot
-                  products={rStrategyProducts}
-                  onProductClick={(p) => setSelectedProduct(p)}
-                  selectedProductId={selectedProduct?.id}
-                />
-              </div>
-            )}
-
-            
-
-            {/* Selected product detail */}
-            {selectedProduct && filteredProducts.find(p => p.id === selectedProduct.id) && (
-              <div className="mt-8 border-t pt-6">
-                <ResultsCard
-                  productName={selectedProduct.name}
-                  assessmentMode={selectedProduct.assessmentMode}
-                  result={selectedProduct.result}
-                  answers={selectedProduct.answers}
-                  rStrategyResult={selectedProduct.rStrategyResult}
-                  rStrategyAnswers={selectedProduct.rStrategyAnswers}
-                  productId={selectedProduct.id}
-                />
-              </div>
             )}
           </div>
         </div>

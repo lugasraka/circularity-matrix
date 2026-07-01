@@ -3,7 +3,7 @@
 A decision-support tool that helps identify the right circular economy strategy for products using two complementary frameworks:
 
 - **HBR Circularity Matrix** — Maps products to RPO, PLE, or DFR strategies [Atasu, Dumas & Van Wassenhove, 2021](https://hbr.org/2021/07/the-circular-business-model)
-- **R-Strategy Scorecard** — Evaluates 5 R-strategies (Reuse, Refurbish, Remanufacture, Repurpose, Recycle) based on the [DIN framework](https://www.din.de/en/innovation-and-research/circular-economy/standards-research-on-the-circular-economy/r-strategy-framework)
+- **R-Strategy Scorecard** — Evaluates 5 R-strategies (Reuse, Refurbish, Remanufacture, Repurpose, Recycle) based on the [DIN framework](https://www.din.de/en/innovation-and-research/circular-economy/standards-research-on-the-circular-economy/r-strategy-framework)claude
 
 ### Live Demo: [circularity-matrix.vercel.app](https://circularity-matrix.vercel.app/)
 
