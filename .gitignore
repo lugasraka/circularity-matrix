@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AIDE runtime state (per-user, not committed)
+.claude/aide-state.json
+.claude/settings.local.json
+
+# AIDE methodology tooling (not tracked in this repo)
+.claude/
+.github/agents/
+.github/hooks/
+.github/instructions/
+.github/workflows/
+.github/copilot-instructions.md
+templates/
+scripts/

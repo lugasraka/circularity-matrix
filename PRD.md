@@ -39,23 +39,23 @@ A web-based decision-support tool that identifies the optimal circular economy s
 
 ### 2.1 HBR Circularity Matrix
 
-| Strategy | Description |
-|----------|-------------|
-| **RPO** | Retain ownership, sell as service (leasing, pay-per-use) |
-| **PLE** | Extend life via repair, refurbishment, remanufacturing |
-| **DFR** | Design for material recovery and recycling |
+| Strategy | Description                                              |
+| -------- | -------------------------------------------------------- |
+| **RPO**  | Retain ownership, sell as service (leasing, pay-per-use) |
+| **PLE**  | Extend life via repair, refurbishment, remanufacturing   |
+| **DFR**  | Design for material recovery and recycling               |
 
 **Dimensions:** Access (3 questions), Process (3 questions), Embedded Value (2 questions)
 
 ### 2.2 R-Strategy Scorecard
 
-| Strategy | Description |
-|----------|-------------|
-| **Reuse** | Direct reuse without modification |
-| **Refurbish** | Restore to working condition |
+| Strategy          | Description                        |
+| ----------------- | ---------------------------------- |
+| **Reuse**         | Direct reuse without modification  |
+| **Refurbish**     | Restore to working condition       |
 | **Remanufacture** | Rebuild to original specifications |
-| **Repurpose** | Use for a different function |
-| **Recycle** | Recover materials |
+| **Repurpose**     | Use for a different function       |
+| **Recycle**       | Recover materials                  |
 
 **Criteria:** Suitability (4 criteria) + Practicality (3 criteria)
 
